@@ -1,0 +1,6 @@
+*.o
+*.d
+*.elf
+*.hex
+build/*
+cppcheck-report.txt
