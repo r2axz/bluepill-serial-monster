@@ -1,0 +1,21 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install arm-none-eabi toolchain
+      run: sudo apt-get intall gcc-arm-none-eabi
+    - name: Clone STM32CubeF1
+      run: git clone https://github.com/STMicroelectronics/STM32CubeF1.git
+    - name: make
+      run: make -j2 STM32CUBE_PATH=./STM32CubeF1
