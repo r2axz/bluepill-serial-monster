@@ -152,7 +152,7 @@ static int usb_cdc_send_port_state(int port, usb_cdc_serial_state_t state) {
     notification->bNotificationType = usb_cdc_notification_serial_state;
     notification->wValue = 0;
     notification->wIndex = usb_cdc_get_port_interface(port);
-    notification->wIndex = sizeof(state);
+    notification->wLength = sizeof(state);
     *state_p = state;
     if (usb_space_available(ep_num)) {
         if (usb_send(ep_num, buf, sizeof(buf)) != sizeof(buf)) {
