@@ -86,7 +86,7 @@ typedef struct {
     uint16_t    wValue;
     uint16_t    wIndex;
     uint16_t    wLength;
-    uint8_t     data[];
+    uint8_t     data[0];
 } __attribute__ ((packed)) usb_cdc_notification_t;
 
 /* Serial State Notification Payload */

@@ -147,12 +147,13 @@ static int usb_cdc_send_port_state(int port, usb_cdc_serial_state_t state) {
     uint8_t ep_num = usb_cdc_get_port_notification_ep(port);
     uint8_t buf[sizeof(usb_cdc_notification_t) + sizeof(state)];
     usb_cdc_notification_t *notification = (usb_cdc_notification_t*)buf;
+    uint16_t *state_p = (uint16_t*)(buf + sizeof(usb_cdc_notification_t));
     notification->bmRequestType = USB_CDC_NOTIFICATION_REQUEST_TYPE;
     notification->bNotificationType = usb_cdc_notification_serial_state;
     notification->wValue = 0;
     notification->wIndex = usb_cdc_get_port_interface(port);
     notification->wIndex = sizeof(state);
-    *((usb_cdc_serial_state_t*)notification->data) = state;
+    *state_p = state;
     if (usb_space_available(ep_num)) {
         if (usb_send(ep_num, buf, sizeof(buf)) != sizeof(buf)) {
             usb_panic();
