@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install arm-none-eabi toolchain
-      run: sudo apt-get intall gcc-arm-none-eabi
+      run: sudo apt-get install gcc-arm-none-eabi
     - name: Clone STM32CubeF1
       run: git clone https://github.com/STMicroelectronics/STM32CubeF1.git
     - name: make
