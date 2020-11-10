@@ -165,9 +165,7 @@ usb_status_t usb_control_endpoint_process_endpoint_request(usb_setup_t *setup,
 
 usb_status_t usb_control_endpoint_process_request(usb_setup_t *setup,
                                             void **payload, size_t *payload_size, usb_tx_complete_cb_t *tx_callback_ptr) {
-    usb_status_t status = usb_status_fail;
-
-    status = usb_cdc_ctrl_process_request(setup, payload, payload_size, tx_callback_ptr);
+    usb_status_t status = usb_cdc_ctrl_process_request(setup, payload, payload_size, tx_callback_ptr);
     if (status != usb_status_fail) {
         return status;
     }
