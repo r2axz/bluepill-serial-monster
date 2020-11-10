@@ -8,60 +8,61 @@
 #include "usb_cdc.h"
 #include "usb_descriptors.h"
 
+static const uint8_t usb_control_endpoint_size          = 8;
+static const uint8_t usb_cdc_interrupt_endpoint_size    = 16;
+static const uint8_t usb_cdc_data_endpoint_size_small   = 32;
+static const uint8_t usb_cdc_data_endpoint_size_large   = 64;
+
+static const uint8_t usb_cdc_interrupt_endpoint_polling_interval = 100;
+
 const usb_endpoint_t usb_endpoints[usb_endpoint_address_last] = {
     /*  Default Control Endpoint */
     {
         .type       = usb_endpoint_type_control,
-        .rx_size    = 8,
-        .tx_size    = 8,
+        .rx_size    = usb_control_endpoint_size,
+        .tx_size    = usb_control_endpoint_size,
         .event_handler = usb_control_endpoint_event_handler,
     },
     /*  CDC 0 Interrupt Endpoint */
     { 
         .type       = usb_endpoint_type_interrupt,
         .rx_size    = 0,
-        .tx_size    = 16,
-        .interval   = 100,
+        .tx_size    = usb_cdc_interrupt_endpoint_size,
         .event_handler = usb_cdc_interrupt_endpoint_event_handler,
     },
      /*  CDC 0 Data Endpoint */
     { 
         .type       = usb_endpoint_type_bulk,
-        .rx_size    = 32,
-        .tx_size    = 32,
-        .interval   = 0,
+        .rx_size    = usb_cdc_data_endpoint_size_small,
+        .tx_size    = usb_cdc_data_endpoint_size_small,
         .event_handler = usb_cdc_data_endpoint_event_handler,
     },
     /*  CDC 1 Interrupt Endpoint */
     { 
         .type       = usb_endpoint_type_interrupt,
         .rx_size    = 0,
-        .tx_size    = 16,
-        .interval   = 100,
+        .tx_size    = usb_cdc_interrupt_endpoint_size,
         .event_handler = usb_cdc_interrupt_endpoint_event_handler,
     },
      /*  CDC 1 Data Endpoint */
     { 
         .type       = usb_endpoint_type_bulk,
-        .rx_size    = 64,
-        .tx_size    = 64,
-        .interval   = 0,
+        .rx_size    = usb_cdc_data_endpoint_size_large,
+        .tx_size    = usb_cdc_data_endpoint_size_large,
         .event_handler = usb_cdc_data_endpoint_event_handler,
     },
     /*  CDC 2 Interrupt Endpoint */
     { 
         .type       = usb_endpoint_type_interrupt,
         .rx_size    = 0,
-        .tx_size    = 16,
-        .interval   = 100,
+        .tx_size    = usb_cdc_interrupt_endpoint_size,
         .event_handler = usb_cdc_interrupt_endpoint_event_handler,
     },
      /*  CDC 2 Data Endpoint */
     { 
         .type       = usb_endpoint_type_bulk,
-        .rx_size    = 64,
-        .tx_size    = 64,
-        .interval   = 0,
+        .rx_size    = usb_cdc_data_endpoint_size_large,
+        .tx_size    = usb_cdc_data_endpoint_size_large,
         .event_handler = usb_cdc_data_endpoint_event_handler,
     },
 };
@@ -85,7 +86,7 @@ const usb_device_descriptor_t usb_device_descriptor = {
     .bDeviceClass       = usb_device_class_misc,
     .bDeviceSubClass    = usb_device_subclass_iad,
     .bDeviceProtocol    = usb_device_protocol_iad,
-    .bMaxPacketSize     = usb_endpoints[usb_endpoint_address_control].rx_size,
+    .bMaxPacketSize     = usb_control_endpoint_size,
     .idVendor           = USB_ID_VENDOR,
     .idProduct          = USB_ID_PRODUCT,
     .bcdDevice          = USB_BCD_VERSION(1, 0, 0),
@@ -158,8 +159,8 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bDescriptorType        = usb_descriptor_type_endpoint,
         .bEndpointAddress       = usb_endpoint_direction_in | usb_endpoint_address_cdc_0_interrupt,
         .bmAttributes           = usb_endpoint_type_interrupt,
-        .wMaxPacketSize         = usb_endpoints[usb_endpoint_address_cdc_0_interrupt].tx_size,
-        .bInterval              = usb_endpoints[usb_endpoint_address_cdc_0_interrupt].interval,
+        .wMaxPacketSize         = usb_cdc_interrupt_endpoint_size,
+        .bInterval              = usb_cdc_interrupt_endpoint_polling_interval,
     },
     .data_0 = {
         .bLength                = sizeof(usb_configuration_descriptor.data_0),
@@ -177,16 +178,16 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bDescriptorType        = usb_descriptor_type_endpoint,
         .bEndpointAddress       = usb_endpoint_direction_out | usb_endpoint_address_cdc_0_data,
         .bmAttributes           = usb_endpoint_type_bulk,
-        .wMaxPacketSize         = usb_endpoints[usb_endpoint_address_cdc_0_data].rx_size,
-        .bInterval              = usb_endpoints[usb_endpoint_address_cdc_0_data].interval,
+        .wMaxPacketSize         = usb_cdc_data_endpoint_size_small,
+        .bInterval              = 0,
     },
     .data_eptx_0 = {
         .bLength                = sizeof(usb_configuration_descriptor.data_eprx_0),
         .bDescriptorType        = usb_descriptor_type_endpoint,
         .bEndpointAddress       = usb_endpoint_direction_in | usb_endpoint_address_cdc_0_data,
         .bmAttributes           = usb_endpoint_type_bulk,
-        .wMaxPacketSize         = usb_endpoints[usb_endpoint_address_cdc_0_data].tx_size,
-        .bInterval              = usb_endpoints[usb_endpoint_address_cdc_0_data].interval,
+        .wMaxPacketSize         = usb_cdc_data_endpoint_size_small,
+        .bInterval              = 0,
     },
     .comm_iad_1 = {
         .bLength                = sizeof(usb_configuration_descriptor.comm_iad_1),
@@ -240,8 +241,8 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bDescriptorType        = usb_descriptor_type_endpoint,
         .bEndpointAddress       = usb_endpoint_direction_in | usb_endpoint_address_cdc_1_interrupt,
         .bmAttributes           = usb_endpoint_type_interrupt,
-        .wMaxPacketSize         = usb_endpoints[usb_endpoint_address_cdc_1_interrupt].tx_size,
-        .bInterval              = usb_endpoints[usb_endpoint_address_cdc_1_interrupt].interval,
+        .wMaxPacketSize         = usb_cdc_interrupt_endpoint_size,
+        .bInterval              = usb_cdc_interrupt_endpoint_polling_interval,
     },
     .data_1 = {
         .bLength                = sizeof(usb_configuration_descriptor.data_1),
@@ -259,16 +260,16 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bDescriptorType        = usb_descriptor_type_endpoint,
         .bEndpointAddress       = usb_endpoint_direction_out | usb_endpoint_address_cdc_1_data,
         .bmAttributes           = usb_endpoint_type_bulk,
-        .wMaxPacketSize         = usb_endpoints[usb_endpoint_address_cdc_1_data].rx_size,
-        .bInterval              = usb_endpoints[usb_endpoint_address_cdc_1_data].interval,
+        .wMaxPacketSize         = usb_cdc_data_endpoint_size_large,
+        .bInterval              = 0,
     },
     .data_eptx_1 = {
         .bLength                = sizeof(usb_configuration_descriptor.data_eprx_1),
         .bDescriptorType        = usb_descriptor_type_endpoint,
         .bEndpointAddress       = usb_endpoint_direction_in | usb_endpoint_address_cdc_1_data,
         .bmAttributes           = usb_endpoint_type_bulk,
-        .wMaxPacketSize         = usb_endpoints[usb_endpoint_address_cdc_1_data].tx_size,
-        .bInterval              = usb_endpoints[usb_endpoint_address_cdc_1_data].interval,
+        .wMaxPacketSize         = usb_cdc_data_endpoint_size_large,
+        .bInterval              = 0,
     },
     .comm_iad_2 = {
         .bLength                = sizeof(usb_configuration_descriptor.comm_iad_2),
@@ -322,8 +323,8 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bDescriptorType        = usb_descriptor_type_endpoint,
         .bEndpointAddress       = usb_endpoint_direction_in | usb_endpoint_address_cdc_2_interrupt,
         .bmAttributes           = usb_endpoint_type_interrupt,
-        .wMaxPacketSize         = usb_endpoints[usb_endpoint_address_cdc_2_interrupt].tx_size,
-        .bInterval              = usb_endpoints[usb_endpoint_address_cdc_2_interrupt].interval,
+        .wMaxPacketSize         = usb_cdc_interrupt_endpoint_size,
+        .bInterval              = usb_cdc_interrupt_endpoint_polling_interval,
     },
     .data_2 = {
         .bLength                = sizeof(usb_configuration_descriptor.data_2),
@@ -341,16 +342,16 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bDescriptorType        = usb_descriptor_type_endpoint,
         .bEndpointAddress       = usb_endpoint_direction_out | usb_endpoint_address_cdc_2_data,
         .bmAttributes           = usb_endpoint_type_bulk,
-        .wMaxPacketSize         = usb_endpoints[usb_endpoint_address_cdc_2_data].rx_size,
-        .bInterval              = usb_endpoints[usb_endpoint_address_cdc_2_data].interval,
+        .wMaxPacketSize         = usb_cdc_data_endpoint_size_large,
+        .bInterval              = 0,
     },
     .data_eptx_2 = {
         .bLength                = sizeof(usb_configuration_descriptor.data_eprx_2),
         .bDescriptorType        = usb_descriptor_type_endpoint,
         .bEndpointAddress       = usb_endpoint_direction_in | usb_endpoint_address_cdc_2_data,
         .bmAttributes           = usb_endpoint_type_bulk,
-        .wMaxPacketSize         = usb_endpoints[usb_endpoint_address_cdc_2_data].tx_size,
-        .bInterval              = usb_endpoints[usb_endpoint_address_cdc_2_data].interval,
+        .wMaxPacketSize         = usb_cdc_data_endpoint_size_large,
+        .bInterval              = 0,
     },
 
 };
