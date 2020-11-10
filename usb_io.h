@@ -59,7 +59,6 @@ typedef struct {
     uint32_t    type;
     uint8_t     rx_size;
     uint8_t     tx_size;
-    uint8_t     interval;
     usb_endpoint_event_handler_t event_handler;
 } usb_endpoint_t;
 

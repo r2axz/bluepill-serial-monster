@@ -39,7 +39,10 @@ OBJS		+= $(STM32_SYSINIT:%.c=$(BUILD_DIR)/%.o)
 STARTUP		+= $(STM32_STARTUP:%.s=$(BUILD_DIR)/%.o)
 
 .PHONY: all
-all: $(TARGET).hex size
+all: $(TARGET).hex $(TARGET).bin size
+
+$(TARGET).bin: $(TARGET).elf
+	$(OBJCOPY) -Obinary $(TARGET).elf $(TARGET).bin
 
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -Oihex $(TARGET).elf $(TARGET).hex

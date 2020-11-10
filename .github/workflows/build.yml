@@ -1,0 +1,32 @@
+name: Build Firmware
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Toolchain
+      run: sudo apt-get -y install gcc-arm-none-eabi
+    - name: Install Cppcheck
+      run: sudo apt-get -y install cppcheck
+    - name: Clone STM32CubeF1
+      run: git clone https://github.com/STMicroelectronics/STM32CubeF1.git
+    - name: Run Cppcheck
+      run: STM32CUBE_PATH=./STM32CubeF1 make cppcheck
+    - name: Build Firmware
+      run: STM32CUBE_PATH=./STM32CubeF1 make
+    - name: Archive Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: firmware
+        path: |
+          *.hex
+          *.bin
