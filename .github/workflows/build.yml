@@ -18,4 +18,4 @@ jobs:
     - name: Clone STM32CubeF1
       run: git clone https://github.com/STMicroelectronics/STM32CubeF1.git
     - name: make
-      run: make -j2 STM32CUBE_PATH=./STM32CubeF1
+      run: make STM32CUBE_PATH=./STM32CubeF1 -j2
