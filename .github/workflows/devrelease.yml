@@ -1,0 +1,34 @@
+name: Development Release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  pre-release:
+    name: "Development Release"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Toolchain
+        run: sudo apt-get -y install gcc-arm-none-eabi
+      - name: Install Cppcheck
+        run: sudo apt-get -y install cppcheck
+      - name: Clone STM32CubeF1
+        run: git clone https://github.com/STMicroelectronics/STM32CubeF1.git
+      - name: Run Cppcheck
+        run: STM32CUBE_PATH=./STM32CubeF1 make cppcheck
+      - name: Build Firmware
+        run: STM32CUBE_PATH=./STM32CubeF1 make
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            LICENSE
+            README.md
+            *.bin
+            *.hex
