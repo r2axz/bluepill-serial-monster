@@ -25,8 +25,8 @@ board appears to be OK with your computer, don't bother fixing it.
 ## Features
 
 * 3 independent _UART_ ports;
-* Hardware flow control (_RTS_/_CTS_) support<sup>1</sup>;
-* _DSR_/_DTR_/_DCD_ signals support;
+* Hardware flow control (**RTS**/**CTS**) support<sup>1</sup>;
+* **DSR**/**DTR**/**DCD** signals support;
 * 7 or 8 bit word length;
 * None, even, odd parity;
 * 1, 1.5, and 2 stop bits;
@@ -72,6 +72,27 @@ or damage may occur.**
 |   DCD  |      IN       |    **PB15**   |    **PB8**    |    **PB9**    |
 
 Note: **5 V** tolerant input pins are shown **in bold**.
+
+## Control Signals
+
+**RTS**, **CTS**, **DSR**, **DTR**, **DCD** are **active-low** signals.
+
+**DSR**, **DTR**, and **DCD** are connected to the internal _weak pull-up_
+resistors, so they remain inactive at rest.
+
+**CTS** is **pulled down** internally, which enables _UART TX_ when nothing is
+connected to **CTS**. Hardware flow control is always on, but it does not get
+in the way of communications as long as nothing is connected to the flow control lines.
+
+**RTS** can be controlled by the host, but as soon as the _UART RX_ buffer is
+**half-full**, **RTS** is forced to the **inactive** state. As long as more than
+one half of the buffer space is available, **RTS** remains in the state set
+by the host. Please take this behaviour into account if you rely on the
+**RTS** signal to control non-standard periphery.
+
+**DSR** and **DCD** are polled 50 times per second.
+
+_UART DMA RX/TX_ buffer size is **1024** bytes.
 
 ## Flashing Firmware
 
