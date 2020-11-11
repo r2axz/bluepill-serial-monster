@@ -13,6 +13,10 @@
 #include "usb_panic.h"
 #include "usb_cdc.h"
 
+/* USB CDC Device Enabled Flag */
+
+static uint8_t usb_cdc_enabled = 0;
+
 /* USB CDC State Struct */
 
 static const usb_cdc_line_coding_t usb_cdc_default_line_coding = {
@@ -470,6 +474,7 @@ void USART3_IRQHandler() {
 /* Device Lifecycle */
 
 void usb_cdc_reset() {
+    usb_cdc_enabled = 0;
     NVIC_EnableIRQ(DMA1_Channel2_IRQn);
     NVIC_EnableIRQ(DMA1_Channel3_IRQn);
     NVIC_EnableIRQ(DMA1_Channel4_IRQn);
@@ -554,6 +559,7 @@ void usb_cdc_reset() {
 }
 
 void usb_cdc_enable() {
+    usb_cdc_enabled = 1;
     for (int port=0; port<USB_CDC_NUM_PORTS; port++) {
         USART_TypeDef *usart = usb_cdc_get_port_usart(port);
         usart->CR1 |=  USART_CR1_PEIE | USART_CR1_IDLEIE | USART_CR1_RE | USART_CR1_PEIE;
@@ -562,6 +568,7 @@ void usb_cdc_enable() {
 }
 
 void usb_cdc_suspend() {
+    usb_cdc_enabled = 0;
     for (int port=0; port<USB_CDC_NUM_PORTS; port++) {
         USART_TypeDef *usart = usb_cdc_get_port_usart(port);
         usart->CR1 &= ~(USART_CR1_UE);
@@ -569,44 +576,46 @@ void usb_cdc_suspend() {
 }
 
 void usb_cdc_frame() {
-    static unsigned int dsr_dcd_polling_timer = 0;
-    if (dsr_dcd_polling_timer == 0) {
-        dsr_dcd_polling_timer = USB_CDC_DSR_DCD_POLLING_INTERVAL;
-        for (int port = 0; port < USB_CDC_NUM_PORTS; port++) {
-            usb_cdc_serial_state_t state = usb_cdc_states[port].serial_state;
-            state &= ~(USB_CDC_SERIAL_STATE_DSR | USB_CDC_SERIAL_STATE_DCD);
-            switch (port) {
-                case 0:
-                    if ((GPIOB->IDR & GPIO_IDR_IDR7) == 0) {
-                        state |= USB_CDC_SERIAL_STATE_DSR;
-                    }
-                    if ((GPIOB->IDR & GPIO_IDR_IDR15) == 0) {
-                        state |= USB_CDC_SERIAL_STATE_DCD;
-                    }
-                    break;
-                case 1:
-                    if ((GPIOB->IDR & GPIO_IDR_IDR4) == 0) {
-                        state |= USB_CDC_SERIAL_STATE_DSR;
-                    }
-                    if ((GPIOB->IDR & GPIO_IDR_IDR8) == 0) {
-                        state |= USB_CDC_SERIAL_STATE_DCD;
-                    }
-                    break;
-                case 2:
-                    if ((GPIOB->IDR & GPIO_IDR_IDR6) == 0) {
-                        state |= USB_CDC_SERIAL_STATE_DSR;
-                    }
-                    if ((GPIOB->IDR & GPIO_IDR_IDR9) == 0) {
-                        state |= USB_CDC_SERIAL_STATE_DCD;
-                    }
-                    break;
-                default:
-                    break;
+    if (usb_cdc_enabled) {
+        static unsigned int dsr_dcd_polling_timer = 0;
+        if (dsr_dcd_polling_timer == 0) {
+            dsr_dcd_polling_timer = USB_CDC_DSR_DCD_POLLING_INTERVAL;
+            for (int port = 0; port < USB_CDC_NUM_PORTS; port++) {
+                usb_cdc_serial_state_t state = usb_cdc_states[port].serial_state;
+                state &= ~(USB_CDC_SERIAL_STATE_DSR | USB_CDC_SERIAL_STATE_DCD);
+                switch (port) {
+                    case 0:
+                        if ((GPIOB->IDR & GPIO_IDR_IDR7) == 0) {
+                            state |= USB_CDC_SERIAL_STATE_DSR;
+                        }
+                        if ((GPIOB->IDR & GPIO_IDR_IDR15) == 0) {
+                            state |= USB_CDC_SERIAL_STATE_DCD;
+                        }
+                        break;
+                    case 1:
+                        if ((GPIOB->IDR & GPIO_IDR_IDR4) == 0) {
+                            state |= USB_CDC_SERIAL_STATE_DSR;
+                        }
+                        if ((GPIOB->IDR & GPIO_IDR_IDR8) == 0) {
+                            state |= USB_CDC_SERIAL_STATE_DCD;
+                        }
+                        break;
+                    case 2:
+                        if ((GPIOB->IDR & GPIO_IDR_IDR6) == 0) {
+                            state |= USB_CDC_SERIAL_STATE_DSR;
+                        }
+                        if ((GPIOB->IDR & GPIO_IDR_IDR9) == 0) {
+                            state |= USB_CDC_SERIAL_STATE_DCD;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                usb_cdc_notify_port_state_change(port, state);
             }
-            usb_cdc_notify_port_state_change(port, state);
+        } else {
+            dsr_dcd_polling_timer = dsr_dcd_polling_timer - 1;
         }
-    } else {
-        dsr_dcd_polling_timer = dsr_dcd_polling_timer - 1;
     }
 }
 
