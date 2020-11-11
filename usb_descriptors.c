@@ -13,7 +13,7 @@
 #define USB_CDC_DATA_ENDPOINT_SIZE_SMALL    32
 #define USB_CDC_DATA_ENDPOINT_SIZE_LARGE    64
 
-#define USB_CDC_INTERRUPT_ENDPOINT_POLLING_INTERVAL 100
+#define USB_CDC_INTERRUPT_ENDPOINT_POLLING_INTERVAL 20
 
 const usb_endpoint_t usb_endpoints[usb_endpoint_address_last] = {
     /*  Default Control Endpoint */
