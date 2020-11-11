@@ -549,7 +549,7 @@ void usb_cdc_reset() {
             usart->CR3 |= USART_CR3_CTSE;
         }
         usb_cdc_set_line_coding(port, &usb_cdc_default_line_coding, 0);
-        dma_rx_ch->CCR |= DMA_CCR_MINC | DMA_CCR_CIRC | DMA_CCR_TCIE | DMA_CCR_HTIE;
+        dma_rx_ch->CCR |= DMA_CCR_MINC | DMA_CCR_CIRC | DMA_CCR_TCIE | DMA_CCR_HTIE | DMA_CCR_PL_0;
         dma_rx_ch->CPAR = (uint32_t)&usart->DR;
         dma_rx_ch->CMAR = (uint32_t)usb_cdc_states[port].rx_buf.data;
         dma_rx_ch->CNDTR = USB_CDC_BUF_SIZE;
