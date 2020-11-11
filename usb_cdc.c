@@ -441,19 +441,22 @@ void DMA1_Channel2_IRQHandler() {
 
 static void usb_cdc_usart_irq_handler(int port) {
     USART_TypeDef *usart = usb_cdc_get_port_usart(port);
+    uint32_t wait_rxne = 0;
     volatile uint32_t status = usart->SR;
+    volatile uint32_t dr;
     if (status & USART_SR_PE) {
-        volatile uint32_t dr;
-        while (usart->SR & USART_SR_RXNE);
-        dr = usart->DR;
-        (void)dr;
+        wait_rxne = 1;
         usb_cdc_notify_port_parity_error(port);
     }
+    if (status & USART_SR_ORE) {
+        usb_cdc_notify_port_overrun(port);
+    }
     if (status & USART_SR_IDLE) {
-        volatile uint32_t dr = usart->DR;
-        (void)dr;
         usb_cdc_port_rx_interrupt(port);
     }
+    while (wait_rxne && (usart->SR & USART_SR_RXNE));
+    dr = usart->DR;
+    (void)dr;
 }
 
 void USART1_IRQHandler() {
@@ -541,12 +544,12 @@ void usb_cdc_reset() {
         DMA_Channel_TypeDef *dma_rx_ch = usb_cdc_get_port_dma_channel(port, usb_cdc_port_direction_rx);
         DMA_Channel_TypeDef *dma_tx_ch = usb_cdc_get_port_dma_channel(port, usb_cdc_port_direction_tx);
         usart->CR1 |= USART_CR1_UE | USART_CR1_TE;
-        usart->CR3 |= USART_CR3_DMAR | USART_CR3_DMAT;
+        usart->CR3 |= USART_CR3_DMAR | USART_CR3_DMAT | USART_CR3_EIE;
         if (port != 0) {
             usart->CR3 |= USART_CR3_CTSE;
         }
         usb_cdc_set_line_coding(port, &usb_cdc_default_line_coding, 0);
-        dma_rx_ch->CCR |= DMA_CCR_MINC | DMA_CCR_CIRC | DMA_CCR_TCIE | DMA_CCR_HTIE;
+        dma_rx_ch->CCR |= DMA_CCR_MINC | DMA_CCR_CIRC | DMA_CCR_TCIE | DMA_CCR_HTIE | DMA_CCR_PL_0;
         dma_rx_ch->CPAR = (uint32_t)&usart->DR;
         dma_rx_ch->CMAR = (uint32_t)usb_cdc_states[port].rx_buf.data;
         dma_rx_ch->CNDTR = USB_CDC_BUF_SIZE;
