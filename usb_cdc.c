@@ -444,7 +444,6 @@ static void usb_cdc_usart_irq_handler(int port) {
     uint32_t wait_rxne = 0;
     volatile uint32_t status = usart->SR;
     volatile uint32_t dr;
-    (void)dr;
     if (status & USART_SR_PE) {
         wait_rxne = 1;
         usb_cdc_notify_port_parity_error(port);
@@ -457,6 +456,7 @@ static void usb_cdc_usart_irq_handler(int port) {
     }
     while (wait_rxne && (usart->SR & USART_SR_RXNE));
     dr = usart->DR;
+    (void)dr;
 }
 
 void USART1_IRQHandler() {
