@@ -167,8 +167,8 @@ void usb_cdc_frame();
 
 /* CDC Device Definitions */
 
-#define USB_CDC_NUM_PORTS                   3
-#define USB_CDC_BUF_SIZE                    0x400
-#define USB_CDC_DSR_DCD_POLLING_INTERVAL    20 /* ms */
+#define USB_CDC_NUM_PORTS                       3
+#define USB_CDC_BUF_SIZE                        0x400
+#define USB_CDC_CRTL_LINES_POLLING_INTERVAL     20 /* ms */
 
 #endif /* USB_CDC_H */
