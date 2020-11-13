@@ -1,6 +1,6 @@
 # General Target Settings
 TARGET	= bluepill-serial-monster
-SRCS	= main.c system_clock.c status_led.c usb_core.c usb_descriptors.c usb_io.c usb_uid.c usb_panic.c usb_cdc.c
+SRCS	= main.c system_clock.c status_led.c usb_core.c usb_descriptors.c usb_io.c usb_uid.c usb_panic.c usb_cdc.c cdc_shell.c
 
 # Toolchain & Utils
 CC		= arm-none-eabi-gcc

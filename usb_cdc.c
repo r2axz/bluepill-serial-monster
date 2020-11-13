@@ -11,6 +11,7 @@
 #include "usb_core.h"
 #include "usb_descriptors.h"
 #include "usb_panic.h"
+#include "cdc_shell.h"
 #include "usb_cdc.h"
 
 /* USB CDC Device Enabled Flag */
@@ -483,6 +484,7 @@ void usb_cdc_enter_config_mode() {
     cdc_state->rx_buf.tail = cdc_state->rx_buf.head;
     cdc_state->tx_buf.tail = cdc_state->tx_buf.head;
     usart->CR1 &= ~(USART_CR1_RE);
+    cdc_shell_init();
     usb_cdc_config_mode = 1;
 }
 
@@ -492,6 +494,7 @@ void usb_cdc_leave_config_mode() {
     cdc_state->rx_buf.tail = cdc_state->rx_buf.head;
     cdc_state->tx_buf.tail = cdc_state->tx_buf.head;
     usart->CR1 |= USART_CR1_RE;
+    cdc_shell_exit();
     usb_cdc_config_mode = 0;
 }
 
