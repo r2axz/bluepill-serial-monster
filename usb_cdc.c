@@ -529,6 +529,10 @@ void usb_cdc_reset() {
         GPIO_ODR_ODR15 | GPIO_ODR_ODR4 | GPIO_ODR_ODR6 |
         GPIO_ODR_ODR7 | GPIO_ODR_ODR8 | GPIO_ODR_ODR9
     );
+    /* Configuration Mode Pin (PB5) */
+    GPIOB->CRL &= ~(GPIO_CRL_CNF5);
+    GPIOB->CRL |= (GPIO_CRL_CNF5_1);
+    GPIOB->ODR |= (GPIO_ODR_ODR5);
     /* USART Reset and Setup */
     RCC->APB2RSTR |= RCC_APB2RSTR_USART1RST;
     RCC->APB1RSTR |= RCC_APB1RSTR_USART2RST;
