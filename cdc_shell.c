@@ -11,6 +11,6 @@ void cdc_shell_exit() {
 
 }
 
-void cdc_shell_write(const void *buf, size_t count) {
-
+void cdc_shell_process_input(const void *buf, size_t count) {
+    _cdc_shell_write(buf, count);
 }
