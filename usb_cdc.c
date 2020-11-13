@@ -397,7 +397,7 @@ void usb_cdc_config_mode_process_tx() {
     }
 }
 
-void _cdc_shell_write(const void *buf, size_t count) {
+void cdc_shell_write(const void *buf, size_t count) {
     usb_cdc_state_t *cdc_state = &usb_cdc_states[USB_CDC_CONFIG_PORT];
     circ_buf_t *rx_buf = &cdc_state->rx_buf;
     while (count) {

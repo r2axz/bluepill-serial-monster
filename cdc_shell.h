@@ -11,7 +11,7 @@
 
 #define USB_SHELL_MAX_CMD_LINE_SIZE     0x100
 
-extern void _cdc_shell_write(const void *buf, size_t count);
+extern void cdc_shell_write(const void *buf, size_t count);
 
 void cdc_shell_init();
 void cdc_shell_process_input(const void *buf, size_t count);
