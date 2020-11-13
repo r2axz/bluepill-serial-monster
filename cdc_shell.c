@@ -23,10 +23,6 @@ void cdc_shell_init() {
     _cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
 }
 
-void cdc_shell_exit() {
-
-}
-
 void cdc_shell_process_input(const void *buf, size_t count) {
     _cdc_shell_write(buf, count);
 }

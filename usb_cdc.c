@@ -372,7 +372,6 @@ void usb_cdc_config_mode_leave() {
     cdc_state->rx_buf.tail = cdc_state->rx_buf.head = dma_head;
     cdc_state->tx_buf.tail = cdc_state->tx_buf.head = 0;
     usart->CR1 |= USART_CR1_RE;
-    cdc_shell_exit();
     usb_cdc_config_mode = 0;
 }
 
