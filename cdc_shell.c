@@ -1,3 +1,9 @@
+/*
+ * MIT License 
+ * 
+ * Copyright (c) 2020 Kirill Kotyagin
+ */
+
 #include "cdc_shell.h"
 
 static char cmd_line[USB_SHELL_MAX_CMD_LINE_SIZE];
