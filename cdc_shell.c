@@ -10,3 +10,7 @@ void cdc_shell_init() {
 void cdc_shell_exit() {
 
 }
+
+void cdc_shell_write(const void *buf, size_t count) {
+
+}
