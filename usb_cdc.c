@@ -478,11 +478,21 @@ void USART3_IRQHandler() {
 /* Configuration Mode Handling */
 
 void usb_cdc_enter_config_mode() {
-
+    usb_cdc_state_t *cdc_state = &usb_cdc_states[USB_CDC_CONFIG_PORT];
+    USART_TypeDef *usart = usb_cdc_get_port_usart(USB_CDC_CONFIG_PORT);
+    cdc_state->rx_buf.tail = cdc_state->rx_buf.head;
+    cdc_state->tx_buf.tail = cdc_state->tx_buf.head;
+    usart->CR1 &= ~(USART_CR1_RE);
+    usb_cdc_config_mode = 1;
 }
 
 void usb_cdc_leave_config_mode() {
-    
+    usb_cdc_state_t *cdc_state = &usb_cdc_states[USB_CDC_CONFIG_PORT];
+    USART_TypeDef *usart = usb_cdc_get_port_usart(USB_CDC_CONFIG_PORT);
+    cdc_state->rx_buf.tail = cdc_state->rx_buf.head;
+    cdc_state->tx_buf.tail = cdc_state->tx_buf.head;
+    usart->CR1 |= USART_CR1_RE;
+    usb_cdc_config_mode = 0;
 }
 
 /* Device Lifecycle */

@@ -170,5 +170,6 @@ void usb_cdc_frame();
 #define USB_CDC_NUM_PORTS                       3
 #define USB_CDC_BUF_SIZE                        0x400
 #define USB_CDC_CRTL_LINES_POLLING_INTERVAL     20 /* ms */
+#define USB_CDC_CONFIG_PORT                     0
 
 #endif /* USB_CDC_H */
