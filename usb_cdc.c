@@ -716,9 +716,11 @@ usb_status_t usb_cdc_ctrl_process_request(usb_setup_t *setup, void **payload,
                      * If the TX buffer is not empty, defer setting
                      * line coding until all data are sent over the serial port.
                      */
-                    if (circ_buf_count(tx_buf->head, tx_buf->tail, USB_CDC_BUF_SIZE) != 0) {
-                        dry_run = 1;
-                        usb_cdc_states[port].line_state_change_pending = 1;
+                    if ((port != USB_CDC_CONFIG_PORT) || !usb_cdc_config_mode) {
+                        if (circ_buf_count(tx_buf->head, tx_buf->tail, USB_CDC_BUF_SIZE) != 0) {
+                            dry_run = 1;
+                            usb_cdc_states[port].line_state_change_pending = 1;
+                        }
                     }
                     return usb_cdc_set_line_coding(port, line_coding, dry_run);
                 }
