@@ -9,26 +9,65 @@
 #include <stdlib.h>
 #include "cdc_shell.h"
 
-static const char *cdc_shell_banner             = "\r\n\r\n"
-                                                  "*******************************\r\n"
-                                                  "* Configuration Shell Started *\r\n"
-                                                  "*******************************\r\n\r\n";
-static const char *cdc_shell_prompt             = ">";
-static const char *cdc_shell_new_line           = "\r\n";
-static const char *cdc_shell_err_too_long       = "Error, command line is too long.\r\n";
-static const char *cdc_shell_err_too_many_args  = "Error, too many command line arguments.\r\n";
+static const char *cdc_shell_banner                 = "\r\n\r\n"
+                                                      "*******************************\r\n"
+                                                      "* Configuration Shell Started *\r\n"
+                                                      "*******************************\r\n\r\n";
+static const char *cdc_shell_prompt                 = ">";
+static const char *cdc_shell_new_line               = "\r\n";
+static const char *cdc_shell_err_too_long           = "Error, command line is too long.\r\n";
+static const char *cdc_shell_err_too_many_args      = "Error, too many command line arguments.\r\n";
+static const char *cdc_shell_err_unknown_command    = "Error, unknown command, use \"help\" to get the list of the available commands.\r\n";
 
 
 static const char *escape_cursor_forward        = "\033[C";
 static const char *escape_cursor_backward       = "\033[D";
 static const char *escape_clear_line_to_end     = "\033[0K";
 
+typedef void (*cmd_func_t)(int argc, char *argv[]);
+
+typedef struct {
+    char *cmd;
+    cmd_func_t handler;
+    char *help;
+} cdc_shell_cmd_t;
+
+void cdc_shell_cmd_set(int argc, char *argv[]) {
+
+}
+
+void cdc_shell_cmd_help(int argc, char *argv[]);
+
+static const cdc_shell_cmd_t cdc_shell_commands[] = {
+    { "help",   cdc_shell_cmd_help, "displays this help message,\r\n\t  use \"command-name help\" to get command-specific help"},
+    { "set",    cdc_shell_cmd_set,  "set configuration parameters" },
+    { 0 }
+};
+
+void cdc_shell_cmd_help(int argc, char *argv[]) {
+    const char *delim = "\t- ";
+    const cdc_shell_cmd_t *shell_cmd = cdc_shell_commands;
+    while (shell_cmd->cmd) {
+        cdc_shell_write(shell_cmd->cmd, strlen(shell_cmd->cmd));
+        cdc_shell_write(delim, strlen(delim));
+        cdc_shell_write(shell_cmd->help, strlen(shell_cmd->help));
+        cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+        shell_cmd++;
+    }
+}
 
 void cdc_shell_exec_command(int argc, char *argv[]) {
-    for (int i=0; i<argc; i++) {
-        cdc_shell_write(argv[i], strlen(argv[i]));
-        cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+    const cdc_shell_cmd_t *shell_cmd = cdc_shell_commands;
+    if (argc) {
+        while (shell_cmd->cmd) {
+            if (strcmp(shell_cmd->cmd, *argv) == 0) {
+                shell_cmd->handler(argc-1, argv+1);
+                return;
+            }
+            shell_cmd++;
+        }
     }
+    cdc_shell_write(cdc_shell_err_unknown_command, strlen(cdc_shell_err_unknown_command));
 }
 
 void cdc_shell_parse_command_line(char *cmd_line) {
