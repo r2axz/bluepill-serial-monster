@@ -37,7 +37,7 @@ static enum {
     cdc_shell_idle,
     cdc_shell_expects_lf,
     cdc_shell_expects_csi,
-    cdc_shell_expects_csn
+    cdc_shell_expects_csn,
 } cdc_shell_state;
 
 void cdc_shell_init() {
@@ -62,21 +62,40 @@ void cdc_shell_cursor_move_back(int n_symb) {
     }
 }
 
+void cdc_shell_handle_backspace() {
+    if (cmd_line_cursor > cmd_line_buf) {
+        cdc_shell_cursor_move_back(cmd_line_cursor - cmd_line_buf);
+        cdc_shell_write(escape_clear_line_to_end, strlen(escape_clear_line_to_end));
+        cmd_line_cursor--;
+        memmove(cmd_line_cursor, cmd_line_cursor+1, strlen(cmd_line_cursor));
+        cdc_shell_write(cmd_line_buf, strlen(cmd_line_buf));
+        cdc_shell_cursor_move_back(strlen(cmd_line_buf) - (cmd_line_cursor - cmd_line_buf));
+    }
+}
+
+void cdc_shell_insert_symbol(char c) {
+    memmove(cmd_line_cursor+1, cmd_line_cursor, strlen(cmd_line_cursor)+1);
+    *cmd_line_cursor = c;
+    cdc_shell_write(cmd_line_cursor, strlen(cmd_line_cursor));
+    cmd_line_cursor++;
+    cdc_shell_cursor_move_back(strlen(cmd_line_buf) - (cmd_line_cursor - cmd_line_buf));
+}
+
 void cdc_shell_process_input(const void *buf, size_t count) {
-    const char *sym = buf;
+    const char *buf_p= buf;
     while (count--) {
         switch (cdc_shell_state) {
         case cdc_shell_expects_csn:
-            if (isdigit((int)*sym)) {
+            if (isdigit((int)*buf_p)) {
                 /* Ignore values for simplicity */
                 break;
             } else {
-                if (*sym == ANSI_CTRLSEQ_CUF) {
+                if (*buf_p == ANSI_CTRLSEQ_CUF) {
                     if (*cmd_line_cursor) {
                         cmd_line_cursor++;
                         cdc_shell_write(escape_cursor_forward, strlen(escape_cursor_forward));
                     }
-                } else if (*sym == ANSI_CTRLSEQ_CUB) {
+                } else if (*buf_p == ANSI_CTRLSEQ_CUB) {
                     if (cmd_line_cursor > cmd_line_buf) {
                         cmd_line_cursor--;
                         cdc_shell_write(escape_cursor_backward, strlen(escape_cursor_backward));
@@ -86,7 +105,7 @@ void cdc_shell_process_input(const void *buf, size_t count) {
             }
             break;
         case cdc_shell_expects_csi:
-            if (*sym == ANSI_CTRLSEQ_ESCAPE_CSI) {
+            if (*buf_p == ANSI_CTRLSEQ_ESCAPE_CSI) {
                 cdc_shell_state = cdc_shell_expects_csn;
                 break;
             } else {
@@ -95,32 +114,21 @@ void cdc_shell_process_input(const void *buf, size_t count) {
             }
         case cdc_shell_expects_lf:
             cdc_shell_state = cdc_shell_idle;
-            if (*sym == '\n') {
+            if (*buf_p == '\n') {
                 break;
             }
         case cdc_shell_idle:
-            if (*sym == '\r' || *sym == '\n') {
+            if (*buf_p == '\r' || *buf_p == '\n') {
                 cdc_shell_state = cdc_shell_expects_lf;
                 cdc_shell_process_command(cmd_line_buf);
                 cdc_shell_clear_cmd_buf();
                 cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
-            } else if (*sym == ANSI_CTRLSEQ_ESCAPE_CHAR) {
+            } else if (*buf_p == ANSI_CTRLSEQ_ESCAPE_CHAR) {
                 cdc_shell_state = cdc_shell_expects_csi;
-            } else if (*sym == '\b') {
-                if (cmd_line_cursor > cmd_line_buf) {
-                    cdc_shell_cursor_move_back(cmd_line_cursor - cmd_line_buf);
-                    cdc_shell_write(escape_clear_line_to_end, strlen(escape_clear_line_to_end));
-                    cmd_line_cursor--;
-                    memmove(cmd_line_cursor, cmd_line_cursor+1, strlen(cmd_line_cursor));
-                    cdc_shell_write(cmd_line_buf, strlen(cmd_line_buf));
-                    cdc_shell_cursor_move_back(strlen(cmd_line_buf) - (cmd_line_cursor - cmd_line_buf));
-                }
-            } else if (isprint((int)(*sym))) {
-                memmove(cmd_line_cursor+1, cmd_line_cursor, strlen(cmd_line_cursor)+1);
-                *cmd_line_cursor = *sym;
-                cdc_shell_write(cmd_line_cursor, strlen(cmd_line_cursor));
-                cmd_line_cursor++;
-                cdc_shell_cursor_move_back(strlen(cmd_line_buf) - (cmd_line_cursor - cmd_line_buf));
+            } else if (*buf_p == '\b') {
+                cdc_shell_handle_backspace();
+            } else if (isprint((int)(*buf_p))) {
+                cdc_shell_insert_symbol(*buf_p);
                 if ((cmd_line_cursor - cmd_line_buf) >= sizeof(cmd_line_buf)/sizeof(*cmd_line_buf)) {
                     cdc_shell_clear_cmd_buf();
                     cdc_shell_write(cdc_shell_err_too_long, strlen(cdc_shell_err_too_long));
@@ -128,6 +136,6 @@ void cdc_shell_process_input(const void *buf, size_t count) {
                 }
             }
         }
-        sym++;
+        buf_p++;
     }
 }
