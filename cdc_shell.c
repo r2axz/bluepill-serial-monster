@@ -108,10 +108,8 @@ void cdc_shell_process_input(const void *buf, size_t count) {
             if (*buf_p == ANSI_CTRLSEQ_ESCAPE_CSI) {
                 cdc_shell_state = cdc_shell_expects_csn;
                 break;
-            } else {
-                cdc_shell_state = cdc_shell_idle;
-                continue;
             }
+            cdc_shell_state = cdc_shell_idle;
         case cdc_shell_expects_lf:
             cdc_shell_state = cdc_shell_idle;
             if (*buf_p == '\n') {
@@ -125,7 +123,7 @@ void cdc_shell_process_input(const void *buf, size_t count) {
                 cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
             } else if (*buf_p == ANSI_CTRLSEQ_ESCAPE_CHAR) {
                 cdc_shell_state = cdc_shell_expects_csi;
-            } else if (*buf_p == '\b') {
+            } else if (*buf_p == '\b' || *buf_p == '\177') {
                 cdc_shell_handle_backspace();
             } else if (isprint((int)(*buf_p))) {
                 cdc_shell_insert_symbol(*buf_p);
