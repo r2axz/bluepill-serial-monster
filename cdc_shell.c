@@ -101,6 +101,7 @@ void cdc_shell_parse_command_line(char *cmd_line) {
 }
 
 static char cmd_line_buf[USB_SHELL_MAX_CMD_LINE_SIZE];
+static char cmd_prev_line_buf[USB_SHELL_MAX_CMD_LINE_SIZE];
 static char *cmd_line_cursor = cmd_line_buf;
 
 static void cdc_shell_clear_cmd_buf() {
@@ -117,6 +118,7 @@ static enum {
 
 void cdc_shell_init() {
     cdc_shell_clear_cmd_buf();
+    memset(cmd_prev_line_buf, 0, sizeof(cmd_prev_line_buf));
     cdc_shell_state = cdc_shell_idle;
     cdc_shell_write(cdc_shell_banner, strlen(cdc_shell_banner));
     cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
@@ -124,8 +126,11 @@ void cdc_shell_init() {
 
 #define ANSI_CTRLSEQ_ESCAPE_CHAR    0x1B
 #define ANSI_CTRLSEQ_ESCAPE_CSI     0x5B
+#define ANSI_CTRLSEQ_CUU            0x41
+#define ANSI_CTRLSEQ_CUD            0x42
 #define ANSI_CTRLSEQ_CUF            0x43
 #define ANSI_CTRLSEQ_CUB            0x44
+
 
 void cdc_shell_cursor_move_back(int n_symb) {
     if (n_symb) {
@@ -175,6 +180,15 @@ void cdc_shell_process_input(const void *buf, size_t count) {
                         cmd_line_cursor--;
                         cdc_shell_write(escape_cursor_backward, strlen(escape_cursor_backward));
                     }
+                } else if (*buf_p == ANSI_CTRLSEQ_CUU) {
+                    size_t prev_cmd_len = strlen(cmd_prev_line_buf);
+                    if (prev_cmd_len) {
+                        strcpy(cmd_line_buf, cmd_prev_line_buf);
+                        cdc_shell_cursor_move_back(cmd_line_cursor - cmd_line_buf);
+                        cdc_shell_write(escape_clear_line_to_end, strlen(escape_clear_line_to_end));
+                        cmd_line_cursor = cmd_line_buf + prev_cmd_len;
+                        cdc_shell_write(cmd_line_buf, prev_cmd_len);
+                    }
                 }
                 cdc_shell_state = cdc_shell_idle;
             }
@@ -194,6 +208,9 @@ void cdc_shell_process_input(const void *buf, size_t count) {
             if (*buf_p == '\r' || *buf_p == '\n') {
                 cdc_shell_state = cdc_shell_expects_lf;
                 cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+                if (cmd_line_cursor != cmd_line_buf) {
+                    strcpy(cmd_prev_line_buf, cmd_line_buf);
+                }
                 cdc_shell_parse_command_line(cmd_line_buf);
                 cdc_shell_clear_cmd_buf();
                 cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
