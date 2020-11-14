@@ -9,21 +9,57 @@
 #include <stdlib.h>
 #include "cdc_shell.h"
 
-void cdc_shell_process_command(const char *cmd) {
-
-}
-
 static const char *cdc_shell_banner             = "\r\n\r\n"
                                                   "*******************************\r\n"
                                                   "* Configuration Shell Started *\r\n"
-                                                  "*******************************\t\n";
-static const char *cdc_shell_prompt             = "\r\n>";
-static const char *cdc_shell_err_too_long       = "\r\nError, command line is too long.";
+                                                  "*******************************\r\n\r\n";
+static const char *cdc_shell_prompt             = ">";
+static const char *cdc_shell_new_line           = "\r\n";
+static const char *cdc_shell_err_too_long       = "Error, command line is too long.\r\n";
+static const char *cdc_shell_err_too_many_args  = "Error, too many command line arguments.\r\n";
 
 
 static const char *escape_cursor_forward        = "\033[C";
 static const char *escape_cursor_backward       = "\033[D";
 static const char *escape_clear_line_to_end     = "\033[0K";
+
+
+void cdc_shell_exec_command(int argc, char *argv[]) {
+    for (int i=0; i<argc; i++) {
+        cdc_shell_write(argv[i], strlen(argv[i]));
+        cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+    }
+}
+
+void cdc_shell_parse_command_line(char *cmd_line) {
+    int argc = 0;
+    char *argv[USB_SHELL_MAC_CMD_ARGS];
+    char *cmd_line_p = cmd_line;
+    while (isspace((int)(*cmd_line_p))) {
+        cmd_line_p++;
+    }
+    while (*cmd_line_p) {
+        if (argc < USB_SHELL_MAC_CMD_ARGS) {
+            argv[argc] = cmd_line_p;
+            while (*cmd_line_p && !isspace((int)(*cmd_line_p))) {
+                cmd_line_p++;
+            }
+            if (*cmd_line_p) {
+                *cmd_line_p++ = '\0';
+            }
+            while (isspace((int)(*cmd_line_p))) {
+                cmd_line_p++;
+            }
+            argc++;
+        } else {
+            cdc_shell_write(cdc_shell_err_too_many_args, strlen(cdc_shell_err_too_many_args));
+            return;
+        }
+    }
+    if (argc > 0) {
+        cdc_shell_exec_command(argc, argv);
+    }
+}
 
 static char cmd_line_buf[USB_SHELL_MAX_CMD_LINE_SIZE];
 static char *cmd_line_cursor = cmd_line_buf;
@@ -118,7 +154,8 @@ void cdc_shell_process_input(const void *buf, size_t count) {
         case cdc_shell_idle:
             if (*buf_p == '\r' || *buf_p == '\n') {
                 cdc_shell_state = cdc_shell_expects_lf;
-                cdc_shell_process_command(cmd_line_buf);
+                cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+                cdc_shell_parse_command_line(cmd_line_buf);
                 cdc_shell_clear_cmd_buf();
                 cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
             } else if (*buf_p == ANSI_CTRLSEQ_ESCAPE_CHAR) {
@@ -129,6 +166,7 @@ void cdc_shell_process_input(const void *buf, size_t count) {
                 cdc_shell_insert_symbol(*buf_p);
                 if ((cmd_line_cursor - cmd_line_buf) >= sizeof(cmd_line_buf)/sizeof(*cmd_line_buf)) {
                     cdc_shell_clear_cmd_buf();
+                    cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
                     cdc_shell_write(cdc_shell_err_too_long, strlen(cdc_shell_err_too_long));
                     cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
                 }
