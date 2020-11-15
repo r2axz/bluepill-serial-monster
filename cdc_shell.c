@@ -15,10 +15,6 @@ static const char *cdc_shell_banner                 = "\r\n\r\n"
                                                       "*******************************\r\n\r\n";
 static const char *cdc_shell_prompt                 = ">";
 static const char *cdc_shell_new_line               = "\r\n";
-static const char *cdc_shell_err_too_long           = "Error, command line is too long.\r\n";
-static const char *cdc_shell_err_too_many_args      = "Error, too many command line arguments.\r\n";
-static const char *cdc_shell_err_unknown_command    = "Error, unknown command, use \"help\" to get the list of the available commands.\r\n";
-
 
 static const char *escape_cursor_forward        = "\033[C";
 static const char *escape_cursor_backward       = "\033[D";
@@ -32,8 +28,43 @@ typedef struct {
     char *help;
 } cdc_shell_cmd_t;
 
-void cdc_shell_cmd_set(int argc, char *argv[]) {
+int cdc_shell_invoke_command(int argc, char *argv[], const cdc_shell_cmd_t *commands) {
+    const cdc_shell_cmd_t *shell_cmd = commands;
+    while (shell_cmd->cmd) {
+        if (strcmp(shell_cmd->cmd, *argv) == 0) {
+            shell_cmd->handler(argc-1, argv+1);
+            return 0;
+        }
+        shell_cmd++;
+    }
+    return -1;
+}
 
+/* Set Commands */
+
+void cdc_shell_cmd_set_help(int argc, char *argv[]) {
+
+}
+
+void cdc_shell_cmd_set_uart(int argc, char *argv[]) {
+    
+}
+
+static const cdc_shell_cmd_t cdc_shell_set_commands[] = {
+    { "help",   cdc_shell_cmd_set_help, "displays this help message\r\n"},
+    { "uart",   cdc_shell_cmd_set_uart, "set configuration parameters" },
+    { 0 }
+};
+
+static const char *cdc_shell_err_set_missing_arguments  = "Error, no arguments, use \"set help\" for the list of arguments.\r\n";
+static const char *cdc_shell_err_set_invalid_argument   = "Error, invalid argument, use \"set help\" for the list of arguments.\r\n";
+
+void cdc_shell_cmd_set(int argc, char *argv[]) {
+    if (argc == 0) {
+        cdc_shell_write(cdc_shell_err_set_missing_arguments, strlen(cdc_shell_err_set_missing_arguments));
+    } else if (cdc_shell_invoke_command(argc, argv, cdc_shell_set_commands) == -1) {
+        cdc_shell_write(cdc_shell_err_set_invalid_argument, strlen(cdc_shell_err_set_invalid_argument));
+    }
 }
 
 void cdc_shell_cmd_help(int argc, char *argv[]);
@@ -43,6 +74,8 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
     { "set",    cdc_shell_cmd_set,  "set configuration parameters" },
     { 0 }
 };
+
+/* Global Commands */
 
 void cdc_shell_cmd_help(int argc, char *argv[]) {
     const char *delim = "\t- ";
@@ -56,19 +89,16 @@ void cdc_shell_cmd_help(int argc, char *argv[]) {
     }
 }
 
+static const char *cdc_shell_err_unknown_command = "Error, unknown command, use \"help\" to get the list of the available commands.\r\n";
+
 void cdc_shell_exec_command(int argc, char *argv[]) {
-    const cdc_shell_cmd_t *shell_cmd = cdc_shell_commands;
-    if (argc) {
-        while (shell_cmd->cmd) {
-            if (strcmp(shell_cmd->cmd, *argv) == 0) {
-                shell_cmd->handler(argc-1, argv+1);
-                return;
-            }
-            shell_cmd++;
-        }
+    if (cdc_shell_invoke_command(argc, argv, cdc_shell_commands) == -1) {
+        cdc_shell_write(cdc_shell_err_unknown_command, strlen(cdc_shell_err_unknown_command));
     }
-    cdc_shell_write(cdc_shell_err_unknown_command, strlen(cdc_shell_err_unknown_command));
 }
+
+static const char *cdc_shell_err_too_long       = "Error, command line is too long.\r\n";
+static const char *cdc_shell_err_too_many_args  = "Error, too many command line arguments.\r\n";
 
 void cdc_shell_parse_command_line(char *cmd_line) {
     int argc = 0;
