@@ -8,6 +8,7 @@
 #define USB_CDC_H
 
 #include <stdint.h>
+#include "usb_core.h"
 
 /* USB CDC Class Codes */
 

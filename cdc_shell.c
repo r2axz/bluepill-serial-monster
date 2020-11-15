@@ -7,6 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include "usb_cdc.h"
 #include "cdc_shell.h"
 
 static const char *cdc_shell_banner                 = "\r\n\r\n"
@@ -57,42 +58,38 @@ void cdc_shell_print_commands(const cdc_shell_cmd_t *commands) {
 
 /* Set Commands */
 
-void cdc_shell_cmd_set_help(int argc, char *argv[]);
+static const char *cdc_shell_err_uart_help              = "Usage: uart port-number|all param-1 value-1 ... param-n value-n\r\n";
+static const char *cdc_shell_err_uart_missing_arguments = "Error, no arguments, use \"uart help\" for the list of arguments.\r\n";
+static const char *cdc_shell_err_uart_invalid_port      = "Error, invalid port number.\r\n";
 
-void cdc_shell_cmd_set_uart(int argc, char *argv[]) {
-    
+void cdc_shell_cmd_uart_set(int port, int argc, char *argv[]) {
+
 }
 
-static const cdc_shell_cmd_t cdc_shell_set_commands[] = {
-    { "help",   cdc_shell_cmd_set_help, "displays this help message"},
-    { "uart",   cdc_shell_cmd_set_uart, "set UART parameters" },
-    { 0 }
-};
-
-static const char *cdc_shell_set_help               = "Usage: set object [number] param-1 [value-1] .... param-x [value-x]\r\n"
-                                                      "where object is:\r\n\r\n";
-
-void cdc_shell_cmd_set_help(int argc, char *argv[]) {
-    cdc_shell_write(cdc_shell_set_help, strlen(cdc_shell_set_help));
-    cdc_shell_print_commands(cdc_shell_set_commands);
-}
-
-static const char *cdc_shell_err_set_missing_arguments  = "Error, no arguments, use \"set help\" for the list of arguments.\r\n";
-static const char *cdc_shell_err_set_invalid_argument   = "Error, invalid argument, use \"set help\" for the list of arguments.\r\n";
-
-void cdc_shell_cmd_set(int argc, char *argv[]) {
-    if (argc == 0) {
-        cdc_shell_write(cdc_shell_err_set_missing_arguments, strlen(cdc_shell_err_set_missing_arguments));
-    } else if (cdc_shell_invoke_command(argc, argv, cdc_shell_set_commands) == -1) {
-        cdc_shell_write(cdc_shell_err_set_invalid_argument, strlen(cdc_shell_err_set_invalid_argument));
-    }
+void cdc_shell_cmd_uart(int argc, char *argv[]) {
+    if (argc) {
+        if (strcmp(*argv, "help") == 0) {
+            cdc_shell_write(cdc_shell_err_uart_help, strlen(cdc_shell_err_uart_help));
+        } else {
+            int port;
+            if (strcmp(*argv, "all") == 0) {
+                port = -1;
+            } else if (((port = atoi(*argv)) < 1) || port > USB_CDC_NUM_PORTS) {
+                cdc_shell_write(cdc_shell_err_uart_invalid_port, strlen(cdc_shell_err_uart_invalid_port));
+                return;
+            }
+            cdc_shell_cmd_uart_set(port, argc-1, argv+1);
+        }
+    } else {
+        cdc_shell_write(cdc_shell_err_uart_missing_arguments, strlen(cdc_shell_err_uart_missing_arguments));
+    } 
 }
 
 void cdc_shell_cmd_help(int argc, char *argv[]);
 
 static const cdc_shell_cmd_t cdc_shell_commands[] = {
     { "help",   cdc_shell_cmd_help, "displays this help message,\r\n\t  use \"command-name help\" to get command-specific help"},
-    { "set",    cdc_shell_cmd_set,  "set configuration parameters" },
+    { "uart",   cdc_shell_cmd_uart, "set UART parameters" },
     { 0 }
 };
 
