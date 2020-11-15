@@ -28,6 +28,8 @@ typedef struct {
     char *help;
 } cdc_shell_cmd_t;
 
+/* Shell Helper Functions */
+
 int cdc_shell_invoke_command(int argc, char *argv[], const cdc_shell_cmd_t *commands) {
     const cdc_shell_cmd_t *shell_cmd = commands;
     while (shell_cmd->cmd) {
@@ -40,21 +42,40 @@ int cdc_shell_invoke_command(int argc, char *argv[], const cdc_shell_cmd_t *comm
     return -1;
 }
 
+void cdc_shell_print_commands(const cdc_shell_cmd_t *commands) {
+    const char *delim = "\t- ";
+    const cdc_shell_cmd_t *cmd = commands;
+    while (cmd->cmd) {
+        cdc_shell_write(cmd->cmd, strlen(cmd->cmd));
+        cdc_shell_write(delim, strlen(delim));
+        cdc_shell_write(cmd->help, strlen(cmd->help));
+        cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+        cmd++;
+    }
+    cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+}
+
 /* Set Commands */
 
-void cdc_shell_cmd_set_help(int argc, char *argv[]) {
-
-}
+void cdc_shell_cmd_set_help(int argc, char *argv[]);
 
 void cdc_shell_cmd_set_uart(int argc, char *argv[]) {
     
 }
 
 static const cdc_shell_cmd_t cdc_shell_set_commands[] = {
-    { "help",   cdc_shell_cmd_set_help, "displays this help message\r\n"},
-    { "uart",   cdc_shell_cmd_set_uart, "set configuration parameters" },
+    { "help",   cdc_shell_cmd_set_help, "displays this help message"},
+    { "uart",   cdc_shell_cmd_set_uart, "set UART parameters" },
     { 0 }
 };
+
+static const char *cdc_shell_set_help               = "Usage: set object [number] param-1 [value-1] .... param-x [value-x]\r\n"
+                                                      "where object is:\r\n\r\n";
+
+void cdc_shell_cmd_set_help(int argc, char *argv[]) {
+    cdc_shell_write(cdc_shell_set_help, strlen(cdc_shell_set_help));
+    cdc_shell_print_commands(cdc_shell_set_commands);
+}
 
 static const char *cdc_shell_err_set_missing_arguments  = "Error, no arguments, use \"set help\" for the list of arguments.\r\n";
 static const char *cdc_shell_err_set_invalid_argument   = "Error, invalid argument, use \"set help\" for the list of arguments.\r\n";
@@ -78,15 +99,7 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
 /* Global Commands */
 
 void cdc_shell_cmd_help(int argc, char *argv[]) {
-    const char *delim = "\t- ";
-    const cdc_shell_cmd_t *shell_cmd = cdc_shell_commands;
-    while (shell_cmd->cmd) {
-        cdc_shell_write(shell_cmd->cmd, strlen(shell_cmd->cmd));
-        cdc_shell_write(delim, strlen(delim));
-        cdc_shell_write(shell_cmd->help, strlen(shell_cmd->help));
-        cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
-        shell_cmd++;
-    }
+    cdc_shell_print_commands(cdc_shell_commands);
 }
 
 static const char *cdc_shell_err_unknown_command = "Error, unknown command, use \"help\" to get the list of the available commands.\r\n";
