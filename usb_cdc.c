@@ -357,9 +357,11 @@ static void usb_cdc_port_rx_interrupt(int port) {
 void usb_cdc_config_mode_enter() {
     usb_cdc_state_t *cdc_state = &usb_cdc_states[USB_CDC_CONFIG_PORT];
     USART_TypeDef *usart = usb_cdc_get_port_usart(USB_CDC_CONFIG_PORT);
+    DMA_Channel_TypeDef *dma_tx_ch = usb_cdc_get_port_dma_channel(USB_CDC_CONFIG_PORT, usb_cdc_port_direction_tx);
     cdc_state->rx_buf.tail = cdc_state->rx_buf.head = 0;
     cdc_state->tx_buf.tail = cdc_state->tx_buf.head = 0;
     usart->CR1 &= ~(USART_CR1_RE);
+    dma_tx_ch->CCR &= ~(DMA_CCR_EN);
     cdc_shell_init();
     usb_cdc_config_mode = 1;
 }
