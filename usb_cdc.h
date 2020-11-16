@@ -174,29 +174,33 @@ void usb_cdc_frame();
 #define USB_CDC_CONFIG_PORT                     0
 
 typedef enum {
-    usb_cdc_signal_rx,
-    usb_cdc_signal_tx,
-    usb_cdc_signal_rts,
-    usb_cdc_signal_cts,
-    usb_cdc_signal_dsr,
-    usb_cdc_signal_dtr,
-    usb_cdc_signal_dcd,
+    usb_cdc_signal_rx   = 0x00,
+    usb_cdc_signal_tx   = 0x01,
+    usb_cdc_signal_rts  = 0x02,
+    usb_cdc_signal_cts  = 0x03,
+    usb_cdc_signal_dsr  = 0x04,
+    usb_cdc_signal_dtr  = 0x05,
+    usb_cdc_signal_dcd  = 0x06,
+    usb_cdc_signal_last,
 } __attribute__ ((packed)) usb_cdc_signal_t;
 
 typedef enum {
-    usb_cdc_pull_floating,
-    usb_cdc_pull_up,
-    usb_cdc_pull_down,
-} __attribute__ ((packed)) usb_cdc_pull_t;
-
-typedef enum {
-     usb_cdc_output_oc,
-     usb_cdc_output_pp,
+     usb_cdc_output_oc  = 0x00,
+     usb_cdc_output_pp  = 0x01,
+     usb_cdc_output_last
 } __attribute__ ((packed)) usb_cdc_output_t;
 
 typedef enum {
-     usb_cdc_polarity_high,
-     usb_cdc_polarity_low,
+     usb_cdc_polarity_high  = 0x00,
+     usb_cdc_polarity_low   = 0x01,
+     usb_cdc_polarity_last
 } __attribute__ ((packed)) usb_cdc_polarity_t;
+
+typedef enum {
+    usb_cdc_pull_floating   = 0x00,
+    usb_cdc_pull_up         = 0x01,
+    usb_cdc_pull_down       = 0x02,
+    usb_cdc_pull_last
+} __attribute__ ((packed)) usb_cdc_pull_t;
 
 #endif /* USB_CDC_H */

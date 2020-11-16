@@ -46,15 +46,81 @@ int cdc_shell_invoke_command(int argc, char *argv[], const cdc_shell_cmd_t *comm
 
 /* Set Commands */
 
-static const char *cdc_shell_err_uart_missing_arguments = "Error, no arguments, use \"help uart\" for the list of arguments.\r\n";
-static const char *cdc_shell_err_uart_invalid_port      = "Error, invalid port number.\r\n";
+static const char *cdc_shell_err_uart_missing_arguments     = "Error, no arguments, use \"help uart\" for the list of arguments.\r\n";
+static const char *cdc_shell_err_uart_invalid_port          = "Error, invalid port number.\r\n";
+static const char *cdc_shell_err_uart_unknown_signal        = "Error, unknown signal name.\r\n";
+static const char *cdc_shell_err_uart_missing_signame       = "Error, expected \"show\" or a signal name, got nothing.\r\n";
+static const char *cdc_shell_err_uart_missing_params        = "Error, missing signal parameters.\r\n";
+static const char *cdc_shell_err_uart_missing_output_type   = "Error, missing output type.\r\n";
+static const char *cdc_shell_err_uart_invalid_output_type   = "Error, invalid output type.\r\n";
+static const char *cdc_shell_err_uart_missing_polarity      = "Error, missing polarity.\r\n";
+static const char *cdc_shell_err_uart_invalid_polarity      = "Error, invalid polarity.\r\n";
 
-void cdc_shell_cmd_uart_set(int port, int argc, char *argv[]) {
-
+static void cdc_shell_cmd_uart_show(int port) {
+    for (int port_index = ((port == -1) ? 0 : port);
+             port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
+             port_index++) {
+        cdc_shell_write("show stub\r\n", strlen("show stub\r\n"));
+    }
 }
 
-void cdc_shell_cmd_uart(int argc, char *argv[]) {
-    if (argc) {
+static void cdc_shell_cmd_uart_set_output_type(int port, usb_cdc_signal_t uart_signal, usb_cdc_output_t output_type) {
+    for (int port_index = ((port == -1) ? 0 : port);
+             port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
+             port_index++) {
+        cdc_shell_write("set output type stub\r\n", strlen("set output type stub\r\n"));
+    }
+}
+
+static void cdc_shell_cmd_uart_set_polarity(int port, usb_cdc_signal_t uart_signal, usb_cdc_polarity_t polarity) {
+    for (int port_index = ((port == -1) ? 0 : port);
+             port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
+             port_index++) {
+        cdc_shell_write("set polarity stub\r\n", strlen("set polarity stub\r\n"));
+    }
+}
+
+static const char *_cdc_uart_signal_names[usb_cdc_signal_last] = {
+    "rx", "tx", "rts", "cts", "dsr", "dtr", "dcd", 
+};
+
+static usb_cdc_signal_t _cdc_uart_signal_by_name(char *name) {
+    for (int i = 0; i < sizeof(_cdc_uart_signal_names)/sizeof(*_cdc_uart_signal_names); i++) {
+        if (strcmp(name, _cdc_uart_signal_names[i]) == 0) {
+            return (usb_cdc_signal_t)i;
+        }
+    }
+    return usb_cdc_signal_last;
+}
+
+static const char *_cdc_uart_output_types[usb_cdc_signal_last] = {
+    "oc", "pp",
+};
+
+static usb_cdc_output_t _cdc_uart_output_type_by_name(char *name) {
+    for (int i = 0; i< sizeof(_cdc_uart_output_types)/sizeof(*_cdc_uart_output_types); i++) {
+        if (strcmp(name, _cdc_uart_output_types[i]) == 0) {
+            return (usb_cdc_output_t)i;
+        }
+    }
+    return usb_cdc_output_last;
+}
+
+static const char *_cdc_uart_polarities[usb_cdc_polarity_last] = {
+    "high", "low",
+};
+
+static usb_cdc_polarity_t _cdc_uart_polarity_by_name(char *name) {
+    for (int i = 0; i< sizeof(_cdc_uart_polarities)/sizeof(*_cdc_uart_polarities); i++) {
+        if (strcmp(name, _cdc_uart_polarities[i]) == 0) {
+            return (usb_cdc_polarity_t)i;
+        }
+    }
+    return usb_cdc_polarity_last;
+}
+
+static void cdc_shell_cmd_uart(int argc, char *argv[]) {
+    if (argc--) {
         int port;
         if (strcmp(*argv, "all") == 0) {
             port = -1;
@@ -62,13 +128,73 @@ void cdc_shell_cmd_uart(int argc, char *argv[]) {
             cdc_shell_write(cdc_shell_err_uart_invalid_port, strlen(cdc_shell_err_uart_invalid_port));
             return;
         }
-        cdc_shell_cmd_uart_set(port, argc-1, argv+1);
+        argv++;
+        if (argc) {
+            if (strcmp(*argv, "show") == 0) {
+                cdc_shell_cmd_uart_show(port);
+            } else {
+                while(argc) {
+                    argc--;
+                    usb_cdc_signal_t uart_signal = _cdc_uart_signal_by_name(*argv);
+                    if (uart_signal == usb_cdc_signal_last) {
+                        cdc_shell_write(cdc_shell_err_uart_unknown_signal, strlen(cdc_shell_err_uart_unknown_signal));
+                        return;
+                    }
+                    argv++;
+                    if (argc) {
+                        while(argc) {
+                            if (strcmp(*argv, "output") == 0) {
+                                argc--;
+                                argv++;
+                                if (argc) {
+                                    usb_cdc_output_t output_type = _cdc_uart_output_type_by_name(*argv);
+                                    if (output_type != usb_cdc_output_last) {
+                                        argc--;
+                                        argv++;
+                                        cdc_shell_cmd_uart_set_output_type(port, uart_signal, output_type);
+                                    } else {
+                                        cdc_shell_write(cdc_shell_err_uart_invalid_output_type, strlen(cdc_shell_err_uart_invalid_output_type));
+                                        return;
+                                    }
+                                } else {
+                                    cdc_shell_write(cdc_shell_err_uart_missing_output_type, strlen(cdc_shell_err_uart_missing_output_type));
+                                    return;
+                                }
+                            } else if (strcmp(*argv, "active") == 0) {
+                                argc--;
+                                argv++;
+                                if (argc) {
+                                    usb_cdc_polarity_t polarity = _cdc_uart_polarity_by_name(*argv);
+                                    if (polarity != usb_cdc_polarity_last) {
+                                        argc--;
+                                        argv++;
+                                        cdc_shell_cmd_uart_set_polarity(port, uart_signal, polarity);
+                                    } else {
+                                        cdc_shell_write(cdc_shell_err_uart_invalid_polarity, strlen(cdc_shell_err_uart_invalid_polarity));
+                                        return;
+                                    }
+                                } else {
+                                    cdc_shell_write(cdc_shell_err_uart_missing_polarity, strlen(cdc_shell_err_uart_missing_polarity));
+                                    return;
+                                }
+                            } else {
+                                break;
+                            }
+                        }
+                    } else {
+                        cdc_shell_write(cdc_shell_err_uart_missing_params, strlen(cdc_shell_err_uart_missing_params));            
+                    }
+                }
+            }
+        } else {
+            cdc_shell_write(cdc_shell_err_uart_missing_signame, strlen(cdc_shell_err_uart_missing_signame));
+        }
     } else {
         cdc_shell_write(cdc_shell_err_uart_missing_arguments, strlen(cdc_shell_err_uart_missing_arguments));
     } 
 }
 
-void cdc_shell_cmd_help(int argc, char *argv[]);
+static void cdc_shell_cmd_help(int argc, char *argv[]);
 
 static const cdc_shell_cmd_t cdc_shell_commands[] = {
     { 
@@ -97,7 +223,7 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
 
 static const char *cdc_shell_err_no_help = "Error, no help for this command, use \"help\" to get the list of available commands.\r\n";
 
-void cdc_shell_cmd_help(int argc, char *argv[]) {
+static void cdc_shell_cmd_help(int argc, char *argv[]) {
     const cdc_shell_cmd_t *cmd = cdc_shell_commands;
     while (cmd->cmd) {
         if (argc) {
@@ -127,7 +253,7 @@ void cdc_shell_cmd_help(int argc, char *argv[]) {
 
 static const char *cdc_shell_err_unknown_command = "Error, unknown command, use \"help\" to get the list of available commands.\r\n";
 
-void cdc_shell_exec_command(int argc, char *argv[]) {
+static void cdc_shell_exec_command(int argc, char *argv[]) {
     if (cdc_shell_invoke_command(argc, argv, cdc_shell_commands) == -1) {
         cdc_shell_write(cdc_shell_err_unknown_command, strlen(cdc_shell_err_unknown_command));
     }
@@ -136,7 +262,7 @@ void cdc_shell_exec_command(int argc, char *argv[]) {
 static const char *cdc_shell_err_too_long       = "Error, command line is too long.\r\n";
 static const char *cdc_shell_err_too_many_args  = "Error, too many command line arguments.\r\n";
 
-void cdc_shell_parse_command_line(char *cmd_line) {
+static void cdc_shell_parse_command_line(char *cmd_line) {
     int argc = 0;
     char *argv[USB_SHELL_MAC_CMD_ARGS];
     char *cmd_line_p = cmd_line;
@@ -198,7 +324,7 @@ void cdc_shell_init() {
 #define ANSI_CTRLSEQ_CUB            0x44
 
 
-void cdc_shell_cursor_move_back(int n_symb) {
+static void cdc_shell_cursor_move_back(int n_symb) {
     if (n_symb) {
         char n_symb_str[8];
         itoa(n_symb, n_symb_str, 10);
@@ -208,7 +334,7 @@ void cdc_shell_cursor_move_back(int n_symb) {
     }
 }
 
-void cdc_shell_handle_backspace() {
+static void cdc_shell_handle_backspace() {
     if (cmd_line_cursor > cmd_line_buf) {
         cdc_shell_cursor_move_back(cmd_line_cursor - cmd_line_buf);
         cdc_shell_write(escape_clear_line_to_end, strlen(escape_clear_line_to_end));
@@ -219,7 +345,7 @@ void cdc_shell_handle_backspace() {
     }
 }
 
-void cdc_shell_insert_symbol(char c) {
+static void cdc_shell_insert_symbol(char c) {
     memmove(cmd_line_cursor+1, cmd_line_cursor, strlen(cmd_line_cursor)+1);
     *cmd_line_cursor = c;
     cdc_shell_write(cmd_line_cursor, strlen(cmd_line_cursor));
