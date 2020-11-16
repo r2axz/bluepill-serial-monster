@@ -201,6 +201,6 @@ typedef enum {
     usb_cdc_pull_up         = 0x01,
     usb_cdc_pull_down       = 0x02,
     usb_cdc_pull_last
-} __attribute__ ((packed)) usb_cdc_pull_t;
+} __attribute__ ((packed)) usb_cdc_pull_type_t;
 
 #endif /* USB_CDC_H */

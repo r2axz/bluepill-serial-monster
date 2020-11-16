@@ -55,6 +55,8 @@ static const char *cdc_shell_err_uart_missing_output_type   = "Error, missing ou
 static const char *cdc_shell_err_uart_invalid_output_type   = "Error, invalid output type.\r\n";
 static const char *cdc_shell_err_uart_missing_polarity      = "Error, missing polarity.\r\n";
 static const char *cdc_shell_err_uart_invalid_polarity      = "Error, invalid polarity.\r\n";
+static const char *cdc_shell_err_uart_missing_pull_type     = "Error, missing pull type.\r\n";
+static const char *cdc_shell_err_uart_invalid_pull_type     = "Error, invalid pull type.\r\n";
 
 static void cdc_shell_cmd_uart_show(int port) {
     for (int port_index = ((port == -1) ? 0 : port);
@@ -77,6 +79,14 @@ static void cdc_shell_cmd_uart_set_polarity(int port, usb_cdc_signal_t uart_sign
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
         cdc_shell_write("set polarity stub\r\n", strlen("set polarity stub\r\n"));
+    }
+}
+
+static void cdc_shell_cmd_uart_set_pull_type(int port, usb_cdc_signal_t uart_signal, usb_cdc_pull_type_t polarity) {
+    for (int port_index = ((port == -1) ? 0 : port);
+             port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
+             port_index++) {
+        cdc_shell_write("set pull stub\r\n", strlen("set pull stub\r\n"));
     }
 }
 
@@ -117,6 +127,19 @@ static usb_cdc_polarity_t _cdc_uart_polarity_by_name(char *name) {
         }
     }
     return usb_cdc_polarity_last;
+}
+
+static const char *_cdc_uart_pull_types[usb_cdc_pull_last] = {
+    "floating", "up", "down",
+};
+
+static usb_cdc_pull_type_t _cdc_uart_pull_type_by_name(char *name) {
+    for (int i = 0; i< sizeof(_cdc_uart_pull_types)/sizeof(*_cdc_uart_pull_types); i++) {
+        if (strcmp(name, _cdc_uart_pull_types[i]) == 0) {
+            return (usb_cdc_pull_type_t)i;
+        }
+    }
+    return usb_cdc_pull_last;
 }
 
 static void cdc_shell_cmd_uart(int argc, char *argv[]) {
@@ -175,6 +198,23 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                     }
                                 } else {
                                     cdc_shell_write(cdc_shell_err_uart_missing_polarity, strlen(cdc_shell_err_uart_missing_polarity));
+                                    return;
+                                }
+                            } else if (strcmp(*argv, "pull") == 0) {
+                                argc--;
+                                argv++;
+                                if (argc) {
+                                    usb_cdc_pull_type_t pull = _cdc_uart_pull_type_by_name(*argv);
+                                    if (pull != usb_cdc_pull_last) {
+                                        argc--;
+                                        argv++;
+                                        cdc_shell_cmd_uart_set_pull_type(port, uart_signal, pull);
+                                    } else {
+                                        cdc_shell_write(cdc_shell_err_uart_invalid_pull_type, strlen(cdc_shell_err_uart_invalid_pull_type));
+                                        return;
+                                    }
+                                } else {
+                                    cdc_shell_write(cdc_shell_err_uart_missing_pull_type, strlen(cdc_shell_err_uart_missing_pull_type));
                                     return;
                                 }
                             } else {
