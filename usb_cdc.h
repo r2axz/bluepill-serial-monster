@@ -173,4 +173,30 @@ void usb_cdc_frame();
 #define USB_CDC_CRTL_LINES_POLLING_INTERVAL     20 /* ms */
 #define USB_CDC_CONFIG_PORT                     0
 
+typedef enum {
+    usb_cdc_signal_rx,
+    usb_cdc_signal_tx,
+    usb_cdc_signal_rts,
+    usb_cdc_signal_cts,
+    usb_cdc_signal_dsr,
+    usb_cdc_signal_dtr,
+    usb_cdc_signal_dcd,
+} __attribute__ ((packed)) usb_cdc_signal_t;
+
+typedef enum {
+    usb_cdc_pull_floating,
+    usb_cdc_pull_up,
+    usb_cdc_pull_down,
+} __attribute__ ((packed)) usb_cdc_pull_t;
+
+typedef enum {
+     usb_cdc_output_oc,
+     usb_cdc_output_pp,
+} __attribute__ ((packed)) usb_cdc_output_t;
+
+typedef enum {
+     usb_cdc_polarity_high,
+     usb_cdc_polarity_low,
+} __attribute__ ((packed)) usb_cdc_polarity_t;
+
 #endif /* USB_CDC_H */
