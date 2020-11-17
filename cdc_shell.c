@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "usb_cdc.h"
 #include "cdc_shell.h"
+#include "cdc_config.h"
 
 static const char *cdc_shell_banner                 = "\r\n\r\n"
                                                       "*******************************\r\n"
