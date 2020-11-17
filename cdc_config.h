@@ -35,7 +35,7 @@ typedef struct {
     usb_cdc_output_t    output_type;
     usb_cdc_polarity_t  polarity;
     usb_cdc_pull_type_t pull;
-} __attribute__ ((packed)) cdc_port_signal_t;
+} __attribute__ ((packed)) cdc_port_signal_config_t;
 
 typedef enum {
     usb_cdc_signal_rx   = 0x00,
@@ -49,7 +49,7 @@ typedef enum {
 } __attribute__ ((packed)) usb_cdc_signal_t;
 
 typedef struct {
-    usb_cdc_signal_t signal_configurations[usb_cdc_signal_last];
+    cdc_port_signal_config_t signal_configurations[usb_cdc_signal_last];
 } __attribute__ ((packed)) usb_cdc_port_config_t;
 
 typedef struct {
