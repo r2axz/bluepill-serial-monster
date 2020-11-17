@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include "usb_cdc.h"
+#include "gpio.h"
 #include "cdc_shell.h"
 #include "cdc_config.h"
 
@@ -67,7 +68,7 @@ static void cdc_shell_cmd_uart_show(int port) {
     }
 }
 
-static void cdc_shell_cmd_uart_set_output_type(int port, usb_cdc_signal_t uart_signal, usb_cdc_output_t output_type) {
+static void cdc_shell_cmd_uart_set_output_type(int port, usb_cdc_signal_t uart_signal, gpio_output_t output_type) {
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
@@ -75,7 +76,7 @@ static void cdc_shell_cmd_uart_set_output_type(int port, usb_cdc_signal_t uart_s
     }
 }
 
-static void cdc_shell_cmd_uart_set_polarity(int port, usb_cdc_signal_t uart_signal, usb_cdc_polarity_t polarity) {
+static void cdc_shell_cmd_uart_set_polarity(int port, usb_cdc_signal_t uart_signal, gpio_polarity_t polarity) {
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
@@ -83,7 +84,7 @@ static void cdc_shell_cmd_uart_set_polarity(int port, usb_cdc_signal_t uart_sign
     }
 }
 
-static void cdc_shell_cmd_uart_set_pull_type(int port, usb_cdc_signal_t uart_signal, usb_cdc_pull_type_t polarity) {
+static void cdc_shell_cmd_uart_set_pull_type(int port, usb_cdc_signal_t uart_signal, gpio_pull_t polarity) {
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
@@ -104,43 +105,43 @@ static usb_cdc_signal_t _cdc_uart_signal_by_name(char *name) {
     return usb_cdc_signal_last;
 }
 
-static const char *_cdc_uart_output_types[usb_cdc_signal_last] = {
-    "oc", "pp",
+static const char *_cdc_uart_output_types[gpio_output_last] = {
+    "pp", "od",
 };
 
-static usb_cdc_output_t _cdc_uart_output_type_by_name(char *name) {
+static gpio_output_t _cdc_uart_output_type_by_name(char *name) {
     for (int i = 0; i< sizeof(_cdc_uart_output_types)/sizeof(*_cdc_uart_output_types); i++) {
         if (strcmp(name, _cdc_uart_output_types[i]) == 0) {
-            return (usb_cdc_output_t)i;
+            return (gpio_output_t)i;
         }
     }
-    return usb_cdc_output_last;
+    return gpio_output_unknown;
 }
 
-static const char *_cdc_uart_polarities[usb_cdc_polarity_last] = {
+static const char *_cdc_uart_polarities[gpio_polarity_last] = {
     "high", "low",
 };
 
-static usb_cdc_polarity_t _cdc_uart_polarity_by_name(char *name) {
+static gpio_polarity_t _cdc_uart_polarity_by_name(char *name) {
     for (int i = 0; i< sizeof(_cdc_uart_polarities)/sizeof(*_cdc_uart_polarities); i++) {
         if (strcmp(name, _cdc_uart_polarities[i]) == 0) {
-            return (usb_cdc_polarity_t)i;
+            return (gpio_polarity_t)i;
         }
     }
-    return usb_cdc_polarity_last;
+    return gpio_polarity_unknown;
 }
 
-static const char *_cdc_uart_pull_types[usb_cdc_pull_last] = {
+static const char *_cdc_uart_pull_types[gpio_pull_last] = {
     "floating", "up", "down",
 };
 
-static usb_cdc_pull_type_t _cdc_uart_pull_type_by_name(char *name) {
+static gpio_pull_t _cdc_uart_pull_type_by_name(char *name) {
     for (int i = 0; i< sizeof(_cdc_uart_pull_types)/sizeof(*_cdc_uart_pull_types); i++) {
         if (strcmp(name, _cdc_uart_pull_types[i]) == 0) {
-            return (usb_cdc_pull_type_t)i;
+            return (gpio_pull_t)i;
         }
     }
-    return usb_cdc_pull_last;
+    return gpio_pull_unknown;
 }
 
 static void cdc_shell_cmd_uart(int argc, char *argv[]) {
@@ -171,8 +172,8 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                 argc--;
                                 argv++;
                                 if (argc) {
-                                    usb_cdc_output_t output_type = _cdc_uart_output_type_by_name(*argv);
-                                    if (output_type != usb_cdc_output_last) {
+                                    gpio_output_t output_type = _cdc_uart_output_type_by_name(*argv);
+                                    if (output_type != gpio_output_unknown) {
                                         argc--;
                                         argv++;
                                         cdc_shell_cmd_uart_set_output_type(port, uart_signal, output_type);
@@ -188,8 +189,8 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                 argc--;
                                 argv++;
                                 if (argc) {
-                                    usb_cdc_polarity_t polarity = _cdc_uart_polarity_by_name(*argv);
-                                    if (polarity != usb_cdc_polarity_last) {
+                                    gpio_polarity_t polarity = _cdc_uart_polarity_by_name(*argv);
+                                    if (polarity != gpio_polarity_unknown) {
                                         argc--;
                                         argv++;
                                         cdc_shell_cmd_uart_set_polarity(port, uart_signal, polarity);
@@ -205,8 +206,8 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                 argc--;
                                 argv++;
                                 if (argc) {
-                                    usb_cdc_pull_type_t pull = _cdc_uart_pull_type_by_name(*argv);
-                                    if (pull != usb_cdc_pull_last) {
+                                    gpio_pull_t pull = _cdc_uart_pull_type_by_name(*argv);
+                                    if (pull != gpio_pull_unknown) {
                                         argc--;
                                         argv++;
                                         cdc_shell_cmd_uart_set_pull_type(port, uart_signal, pull);
