@@ -45,8 +45,11 @@ typedef struct {
     gpio_pull_t         pull;
     gpio_polarity_t     polarity;
     gpio_speed_t        speed;
-} __attribute__ ((packed)) gpio_pin_config_t;
+} __attribute__ ((packed)) gpio_pin_t;
 
-void gpio_pin_init(const gpio_pin_config_t *pincfg);
+void gpio_pin_init(const gpio_pin_t *pin);
+
+void gpio_pin_set(const gpio_pin_t *pin, int is_active);
+int  gpio_pin_get(const gpio_pin_t *pin);
 
 #endif /* GPIO_G */
