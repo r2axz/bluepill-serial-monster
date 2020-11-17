@@ -10,6 +10,7 @@ void gpio_pin_init(const gpio_pin_config_t *pincfg) {
     uint8_t crx_offset = (pincfg->pin & 0x07) << 2;
     uint32_t modecfg = 0;
     _gpio_enable_port(pincfg->port);
+    *crx &= ~((GPIO_CRL_CNF0 | GPIO_CRL_MODE0) << crx_offset);
     if (pincfg->dir == gpio_dir_input) {
         if (pincfg->pull == gpio_pull_floating) {
             modecfg |= GPIO_CRL_CNF0_0;
@@ -36,6 +37,5 @@ void gpio_pin_init(const gpio_pin_config_t *pincfg) {
             modecfg |= GPIO_CRL_CNF0_1;
         }
     }
-    *crx &= ~((GPIO_CRL_CNF0 | GPIO_CRL_MODE0) << crx_offset);
     *crx |= (modecfg << crx_offset);
 }
