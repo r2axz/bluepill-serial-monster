@@ -68,7 +68,7 @@ static void cdc_shell_cmd_uart_show(int port) {
     }
 }
 
-static void cdc_shell_cmd_uart_set_output_type(int port, usb_cdc_signal_t uart_signal, gpio_output_t output_type) {
+static void cdc_shell_cmd_uart_set_output_type(int port, cdc_pin_t uart_signal, gpio_output_t output_type) {
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
@@ -76,7 +76,7 @@ static void cdc_shell_cmd_uart_set_output_type(int port, usb_cdc_signal_t uart_s
     }
 }
 
-static void cdc_shell_cmd_uart_set_polarity(int port, usb_cdc_signal_t uart_signal, gpio_polarity_t polarity) {
+static void cdc_shell_cmd_uart_set_polarity(int port, cdc_pin_t uart_signal, gpio_polarity_t polarity) {
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
@@ -84,7 +84,7 @@ static void cdc_shell_cmd_uart_set_polarity(int port, usb_cdc_signal_t uart_sign
     }
 }
 
-static void cdc_shell_cmd_uart_set_pull_type(int port, usb_cdc_signal_t uart_signal, gpio_pull_t polarity) {
+static void cdc_shell_cmd_uart_set_pull_type(int port, cdc_pin_t uart_signal, gpio_pull_t polarity) {
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
@@ -92,17 +92,17 @@ static void cdc_shell_cmd_uart_set_pull_type(int port, usb_cdc_signal_t uart_sig
     }
 }
 
-static const char *_cdc_uart_signal_names[usb_cdc_signal_last] = {
+static const char *_cdc_uart_signal_names[cdc_pin_last] = {
     "rx", "tx", "rts", "cts", "dsr", "dtr", "dcd", 
 };
 
-static usb_cdc_signal_t _cdc_uart_signal_by_name(char *name) {
+static cdc_pin_t _cdc_uart_signal_by_name(char *name) {
     for (int i = 0; i < sizeof(_cdc_uart_signal_names)/sizeof(*_cdc_uart_signal_names); i++) {
         if (strcmp(name, _cdc_uart_signal_names[i]) == 0) {
-            return (usb_cdc_signal_t)i;
+            return (cdc_pin_t)i;
         }
     }
-    return usb_cdc_signal_last;
+    return cdc_pin_unknown;
 }
 
 static const char *_cdc_uart_output_types[gpio_output_last] = {
@@ -160,8 +160,8 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
             } else {
                 while(argc) {
                     argc--;
-                    usb_cdc_signal_t uart_signal = _cdc_uart_signal_by_name(*argv);
-                    if (uart_signal == usb_cdc_signal_last) {
+                    cdc_pin_t uart_signal = _cdc_uart_signal_by_name(*argv);
+                    if (uart_signal == cdc_pin_unknown) {
                         cdc_shell_write(cdc_shell_err_uart_unknown_signal, strlen(cdc_shell_err_uart_unknown_signal));
                         return;
                     }

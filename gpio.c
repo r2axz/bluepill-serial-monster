@@ -20,6 +20,7 @@ void gpio_pin_init(const gpio_pin_t *pin) {
         }
     } else {
         switch (pin->speed) {
+        case gpio_speed_unknown:
         case gpio_speed_low:
             modecfg |= GPIO_CRL_MODE0_1;
             break;
