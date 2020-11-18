@@ -232,9 +232,6 @@ static usb_status_t usb_cdc_set_control_line_state(int port, uint16_t state) {
 
 static usb_status_t usb_cdc_set_line_coding(int port, const usb_cdc_line_coding_t *line_coding, int dry_run) {
     USART_TypeDef *usart = usb_cdc_get_port_usart(port);
-    if (line_coding->dwDTERate != 9600) {
-        __NOP();
-    }
     if (line_coding->dwDTERate != 0) {
         uint32_t new_brr = usb_cdc_get_port_fck(port) / line_coding->dwDTERate;
         if (!dry_run) {
