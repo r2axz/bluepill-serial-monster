@@ -21,7 +21,7 @@ typedef struct {
 } __attribute__ ((packed)) cdc_port_t;
 
 typedef struct {
-    cdc_port_t port_configurations[USB_CDC_NUM_PORTS];
+    cdc_port_t port_config[USB_CDC_NUM_PORTS];
 } __attribute__ ((packed)) cdc_config_t;
 
 #endif /* CDC_CONFIG_H */
