@@ -256,7 +256,7 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
                           "Use uart port-number|all signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\r\n"
                           "to set UART parameters, where signal names are rx, tx, rts, cts, dsr, dtr, dcd,\r\n"
                           "and params are:\r\n"
-                          "  output\t[oc|pp]\r\n"
+                          "  output\t[pp|od]\r\n"
                           "  active\t[low|high]\r\n"
                           "  pull\t\t[floating|up|down]",
     },
