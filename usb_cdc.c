@@ -583,6 +583,8 @@ void usb_cdc_reset() {
     /* Configuration Mode Pin */
     gpio_pin_init(&device_config->config_pin);
     /* USART & DMA Reset and Setup */
+    RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+    RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_USART3EN;
     RCC->AHBENR |= RCC_AHBENR_DMA1EN;
     RCC->APB2RSTR |= RCC_APB2RSTR_USART1RST;
     RCC->APB1RSTR |= RCC_APB1RSTR_USART2RST;
