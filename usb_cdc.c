@@ -591,6 +591,7 @@ void usb_cdc_reset() {
      * this frees PA15, PB3, PB4 (needed for DSR inputs).
      */
     RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+    AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
     RCC->AHBENR |= RCC_AHBENR_DMA1EN;
     /* DSR/DCD inputs configuration */
     GPIOB->CRL &= ~(GPIO_CRL_CNF4 | GPIO_CRL_CNF6 | GPIO_CRL_CNF7);
