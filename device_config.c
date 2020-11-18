@@ -1,5 +1,5 @@
 #include <stm32f1xx.h>
-#include "dev_config.h"
+#include "device_config.h"
 
 // | Signal |   Direction   |     UART1     |     UART2     |     UART3     |
 // |:-------|:-------------:|:--------------|:--------------|:--------------|

@@ -1,5 +1,5 @@
-#ifndef DEV_CONFIG_H
-#define DEV_CONFIG_H
+#ifndef DEVICE_CONFIG_H
+#define DEVICE_CONFIG_H
 
 #include "cdc_config.h"
 
@@ -9,4 +9,4 @@ typedef struct {
 
 const device_config_t *device_config_get();
 
-#endif /* DEV_CONFIG_H_ */
+#endif /* DEVICE_CONFIG_H_ */
