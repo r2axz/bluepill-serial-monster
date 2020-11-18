@@ -556,6 +556,12 @@ void usb_cdc_reset() {
     NVIC_EnableIRQ(DMA1_Channel5_IRQn);
     NVIC_EnableIRQ(DMA1_Channel6_IRQn);
     NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+    /* 
+     * Disable JTAG interface (SWD is still enabled),
+     * this frees PA15, PB3, PB4 (needed for DSR inputs).
+     */
+    RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+    AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
     /* Configuration Mode Pin */
     gpio_pin_init(&device_config->config_pin);
     /* USART TX/RTS Pins */
@@ -588,13 +594,6 @@ void usb_cdc_reset() {
     GPIOA->CRL &= ~(GPIO_CRL_CNF4 | GPIO_CRL_CNF5 | GPIO_CRL_CNF6);
     GPIOA->CRL |= (GPIO_CRL_MODE4_0 | GPIO_CRL_MODE5_0 | GPIO_CRL_MODE6_0);
     GPIOA->BSRR = (GPIO_BSRR_BS4 | GPIO_BSRR_BS5 | GPIO_BSRR_BS6);
-    /* 
-     * Disable JTAG interface (SWD is still enabled),
-     * this frees PA15, PB3, PB4 (needed for DSR inputs).
-     */
-    RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-    AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
-    RCC->AHBENR |= RCC_AHBENR_DMA1EN;
     /* DSR/DCD inputs configuration */
     GPIOB->CRL &= ~(GPIO_CRL_CNF4 | GPIO_CRL_CNF6 | GPIO_CRL_CNF7);
     GPIOB->CRL |= ( GPIO_CRL_CNF4_1 | GPIO_CRL_CNF6_1 | GPIO_CRL_CNF7_1);
@@ -604,7 +603,8 @@ void usb_cdc_reset() {
         GPIO_ODR_ODR15 | GPIO_ODR_ODR4 | GPIO_ODR_ODR6 |
         GPIO_ODR_ODR7 | GPIO_ODR_ODR8 | GPIO_ODR_ODR9
     );
-    /* USART Reset and Setup */
+    /* USART & DMA Reset and Setup */
+    RCC->AHBENR |= RCC_AHBENR_DMA1EN;
     RCC->APB2RSTR |= RCC_APB2RSTR_USART1RST;
     RCC->APB1RSTR |= RCC_APB1RSTR_USART2RST;
     RCC->APB1RSTR |= RCC_APB1RSTR_USART3RST;
