@@ -1,5 +1,15 @@
 #include <stm32f1xx.h>
 #include "dev_config.h"
+
+// | Signal |   Direction   |     UART1     |     UART2     |     UART3     |
+// |:-------|:-------------:|:--------------|:--------------|:--------------|
+// |   RX   |      IN       |    **PA10**   |      PA3      |    **PB11**   |
+// |   TX   |      OUT      |      PA9      |      PA2      |      PB10     |
+// |   RTS  |      OUT      |      N/A      |      PA1      |      PB14     |
+// |   CTS  |      IN       |      N/A      |      PA0      |    **PB13**   |
+// |   DSR  |      IN       |    **PB7**    |    **PB4**    |    **PB6**    |
+// |   DTR  |      OUT      |      PA4      |      PA5      |      PA6      |
+// |   DCD  |      IN       |    **PB15**   |    **PB8**    |    **PB9**    |
  
 static const device_config_t default_device_config = {
     .cdc_config = {
@@ -46,3 +56,7 @@ static const device_config_t default_device_config = {
         }
     }
 };
+
+const device_config_t *device_config_get() {
+    return &default_device_config;
+}
