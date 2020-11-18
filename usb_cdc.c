@@ -520,8 +520,8 @@ void DMA1_Channel2_IRQHandler() {
 static void usb_cdc_usart_irq_handler(int port) {
     USART_TypeDef *usart = usb_cdc_get_port_usart(port);
     uint32_t wait_rxne = 0;
-    volatile uint32_t status = usart->SR;
-    volatile uint32_t dr;
+    uint32_t status = usart->SR;
+    uint32_t dr;
     if (status & USART_SR_PE) {
         wait_rxne = 1;
         usb_cdc_notify_port_parity_error(port);
