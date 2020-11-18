@@ -12,6 +12,8 @@
 #include "usb_descriptors.h"
 #include "usb_panic.h"
 #include "cdc_shell.h"
+#include "device_config.h"
+#include "gpio.h"
 #include "usb_cdc.h"
 
 /* USB CDC Device Enabled Flag */
@@ -546,6 +548,7 @@ void USART3_IRQHandler() {
 /* Device Lifecycle */
 
 void usb_cdc_reset() {
+    const device_config_t *device_config = device_config_get();
     usb_cdc_enabled = 0;
     NVIC_EnableIRQ(DMA1_Channel2_IRQn);
     NVIC_EnableIRQ(DMA1_Channel3_IRQn);
@@ -553,6 +556,8 @@ void usb_cdc_reset() {
     NVIC_EnableIRQ(DMA1_Channel5_IRQn);
     NVIC_EnableIRQ(DMA1_Channel6_IRQn);
     NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+    /* Configuration Mode Pin */
+    gpio_pin_init(&device_config->config_pin);
     /* USART TX/RTS Pins */
     RCC->APB2ENR |= RCC_APB2ENR_USART1EN | RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN;
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_USART3EN;
@@ -599,10 +604,6 @@ void usb_cdc_reset() {
         GPIO_ODR_ODR15 | GPIO_ODR_ODR4 | GPIO_ODR_ODR6 |
         GPIO_ODR_ODR7 | GPIO_ODR_ODR8 | GPIO_ODR_ODR9
     );
-    /* Configuration Mode Pin (PB5) */
-    GPIOB->CRL &= ~(GPIO_CRL_CNF5);
-    GPIOB->CRL |= (GPIO_CRL_CNF5_1);
-    GPIOB->ODR |= (GPIO_ODR_ODR5);
     /* USART Reset and Setup */
     RCC->APB2RSTR |= RCC_APB2RSTR_USART1RST;
     RCC->APB1RSTR |= RCC_APB1RSTR_USART2RST;
@@ -654,6 +655,7 @@ void usb_cdc_suspend() {
 
 void usb_cdc_frame() {
     if (usb_cdc_enabled) {
+        const device_config_t *device_config = device_config_get();
         static unsigned int ctrl_lines_polling_timer = 0;
         if (ctrl_lines_polling_timer == 0) {
             uint32_t idr = GPIOB->IDR;
@@ -691,7 +693,7 @@ void usb_cdc_frame() {
                 }
                 usb_cdc_notify_port_state_change(port, state);
             }
-            if ((!(idr & GPIO_IDR_IDR5)) != usb_cdc_config_mode) {
+            if (gpio_pin_get(&device_config->config_pin) != usb_cdc_config_mode) {
                 if (usb_cdc_config_mode) {
                     usb_cdc_config_mode_leave();
                 } else {
