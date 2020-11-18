@@ -43,6 +43,7 @@ typedef struct {
     usb_cdc_serial_state_t  serial_state;
     uint8_t                 serial_state_pending;
     uint8_t                 rts_active;
+    uint8_t                 dtr_active;
 } usb_cdc_state_t;
 
 static usb_cdc_state_t usb_cdc_states[USB_CDC_NUM_PORTS];
@@ -199,29 +200,35 @@ static void usb_cdc_notify_port_parity_error(int port) {
 
 /* Line State and Coding */
 
-static void usb_cdc_set_port_dtr(int port, int on) {
+static void usb_cdc_update_port_dtr(int port) {
     if (port < USB_CDC_NUM_PORTS) {
-        const uint32_t base_dtr_pin = GPIO_BSRR_BS4;
-        GPIOA->BSRR = (base_dtr_pin << port) << (on ? GPIO_BSRR_BR0_Pos : 0);
+        usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
+        const gpio_pin_t *dtr_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_dtr];
+        gpio_pin_set(dtr_pin, cdc_state->dtr_active);
+    }
+}
+
+static void usb_cdc_set_port_dtr(int port, int dtr_active) {
+    if (port < USB_CDC_NUM_PORTS) {
+        usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
+        cdc_state->dtr_active = dtr_active;
+        usb_cdc_update_port_dtr(port);
     }
 }
 
 static void usb_cdc_update_port_rts(int port) {
     if ((port < USB_CDC_NUM_PORTS) && (port != 0)) {
+        const gpio_pin_t *rts_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_rts];
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
         circ_buf_t *rx_buf = &cdc_state->rx_buf;
-        int on = circ_buf_space(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE) > (USB_CDC_BUF_SIZE>>1) && cdc_state->rts_active;
-        if (port == 1) {
-            GPIOA->BSRR = GPIO_BSRR_BS1 << (on ? GPIO_BSRR_BR0_Pos : 0);
-        } else if (port == 2) {
-            GPIOB->BSRR = GPIO_BSRR_BS14 << (on ? GPIO_BSRR_BR0_Pos : 0);
-        }
+        int rts_active = circ_buf_space(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE) > (USB_CDC_BUF_SIZE>>1) && cdc_state->rts_active;
+        gpio_pin_set(rts_pin, rts_active);
     }
 }
 
-static void usb_cdc_set_port_rts(int port, int on) {
+static void usb_cdc_set_port_rts(int port, int rts_active) {
     if ((port < USB_CDC_NUM_PORTS)) {
-        usb_cdc_states[port].rts_active = on;
+        usb_cdc_states[port].rts_active = rts_active;
         usb_cdc_update_port_rts(port);
     }
 }
@@ -545,6 +552,16 @@ void USART3_IRQHandler() {
     usb_cdc_usart_irq_handler(2);
 }
 
+/* Port Configuration & Control Lines Functions */
+
+void usb_cdc_configure_port(int port) {
+    const device_config_t *device_config = device_config_get();
+    for (cdc_pin_t pin = 0; pin < cdc_pin_last; pin++) {
+        gpio_pin_init(&device_config->cdc_config.port_config[port].pins[pin]);
+        usb_cdc_update_port_rts(port);
+    }
+}
+
 /* Device Lifecycle */
 
 void usb_cdc_reset() {
@@ -564,45 +581,45 @@ void usb_cdc_reset() {
     AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
     /* Configuration Mode Pin */
     gpio_pin_init(&device_config->config_pin);
-    /* USART TX/RTS Pins */
-    RCC->APB2ENR |= RCC_APB2ENR_USART1EN | RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN;
-    RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_USART3EN;
-    GPIOA->CRH &= ~(GPIO_CRH_CNF9);
-    GPIOA->CRH |= (GPIO_CRH_MODE9_0|GPIO_CRH_CNF9_1);
-    GPIOA->CRL &= ~(GPIO_CRL_CNF1 | GPIO_CRL_CNF2);
-    GPIOA->CRL |= ((GPIO_CRL_MODE1_0) | (GPIO_CRL_MODE2_0|GPIO_CRL_CNF2_1));
-    GPIOB->CRH &= ~(GPIO_CRH_CNF10 | GPIO_CRH_CNF14);
-    GPIOB->CRH |= ((GPIO_CRH_MODE10_0|GPIO_CRH_CNF10_1) | (GPIO_CRH_MODE14_0));
-    /* USART RX Pins Pull Ups */
-    GPIOA->CRL &= ~(GPIO_CRL_CNF3);
-    GPIOA->CRL |= (GPIO_CRL_CNF3_1);
-    GPIOA->CRH &= ~(GPIO_CRH_CNF10);
-    GPIOA->CRH |= (GPIO_CRH_CNF10_1);
-    GPIOA->ODR |= (GPIO_ODR_ODR3 | GPIO_ODR_ODR10);
-    GPIOB->CRH &= ~(GPIO_CRH_CNF11);
-    GPIOB->CRH |= (GPIO_CRH_CNF11_1);
-    GPIOB->ODR |= (GPIO_ODR_ODR11);
-    /* RTS Initial Value */
-    GPIOA->BSRR = GPIO_BSRR_BS1;
-    GPIOB->BSRR = GPIO_BSRR_BS14;
-    /* USART CTS Pull Down */
-    GPIOA->CRL &= ~(GPIO_CRL_CNF0);
-    GPIOA->CRL |= (GPIO_CRL_CNF0_1);
-    GPIOB->CRH &= ~(GPIO_CRH_CNF13);
-    GPIOB->CRH |= (GPIO_CRH_CNF13_1);
-    /* USART DTR Pins */
-    GPIOA->CRL &= ~(GPIO_CRL_CNF4 | GPIO_CRL_CNF5 | GPIO_CRL_CNF6);
-    GPIOA->CRL |= (GPIO_CRL_MODE4_0 | GPIO_CRL_MODE5_0 | GPIO_CRL_MODE6_0);
-    GPIOA->BSRR = (GPIO_BSRR_BS4 | GPIO_BSRR_BS5 | GPIO_BSRR_BS6);
-    /* DSR/DCD inputs configuration */
-    GPIOB->CRL &= ~(GPIO_CRL_CNF4 | GPIO_CRL_CNF6 | GPIO_CRL_CNF7);
-    GPIOB->CRL |= ( GPIO_CRL_CNF4_1 | GPIO_CRL_CNF6_1 | GPIO_CRL_CNF7_1);
-    GPIOB->CRH &= ~(GPIO_CRH_CNF8 | GPIO_CRH_CNF9 | GPIO_CRH_CNF15);
-    GPIOB->CRH |= (GPIO_CRH_CNF8_1 | GPIO_CRH_CNF9_1 | GPIO_CRH_CNF15_1);
-    GPIOB->ODR |= (
-        GPIO_ODR_ODR15 | GPIO_ODR_ODR4 | GPIO_ODR_ODR6 |
-        GPIO_ODR_ODR7 | GPIO_ODR_ODR8 | GPIO_ODR_ODR9
-    );
+    // /* USART TX/RTS Pins */
+    // RCC->APB2ENR |= RCC_APB2ENR_USART1EN | RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN;
+    // RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_USART3EN;
+    // GPIOA->CRH &= ~(GPIO_CRH_CNF9);
+    // GPIOA->CRH |= (GPIO_CRH_MODE9_0|GPIO_CRH_CNF9_1);
+    // GPIOA->CRL &= ~(GPIO_CRL_CNF1 | GPIO_CRL_CNF2);
+    // GPIOA->CRL |= ((GPIO_CRL_MODE1_0) | (GPIO_CRL_MODE2_0|GPIO_CRL_CNF2_1));
+    // GPIOB->CRH &= ~(GPIO_CRH_CNF10 | GPIO_CRH_CNF14);
+    // GPIOB->CRH |= ((GPIO_CRH_MODE10_0|GPIO_CRH_CNF10_1) | (GPIO_CRH_MODE14_0));
+    // /* USART RX Pins Pull Ups */
+    // GPIOA->CRL &= ~(GPIO_CRL_CNF3);
+    // GPIOA->CRL |= (GPIO_CRL_CNF3_1);
+    // GPIOA->CRH &= ~(GPIO_CRH_CNF10);
+    // GPIOA->CRH |= (GPIO_CRH_CNF10_1);
+    // GPIOA->ODR |= (GPIO_ODR_ODR3 | GPIO_ODR_ODR10);
+    // GPIOB->CRH &= ~(GPIO_CRH_CNF11);
+    // GPIOB->CRH |= (GPIO_CRH_CNF11_1);
+    // GPIOB->ODR |= (GPIO_ODR_ODR11);
+    // /* RTS Initial Value */
+    // GPIOA->BSRR = GPIO_BSRR_BS1;
+    // GPIOB->BSRR = GPIO_BSRR_BS14;
+    // /* USART CTS Pull Down */
+    // GPIOA->CRL &= ~(GPIO_CRL_CNF0);
+    // GPIOA->CRL |= (GPIO_CRL_CNF0_1);
+    // GPIOB->CRH &= ~(GPIO_CRH_CNF13);
+    // GPIOB->CRH |= (GPIO_CRH_CNF13_1);
+    // /* USART DTR Pins */
+    // GPIOA->CRL &= ~(GPIO_CRL_CNF4 | GPIO_CRL_CNF5 | GPIO_CRL_CNF6);
+    // GPIOA->CRL |= (GPIO_CRL_MODE4_0 | GPIO_CRL_MODE5_0 | GPIO_CRL_MODE6_0);
+    // GPIOA->BSRR = (GPIO_BSRR_BS4 | GPIO_BSRR_BS5 | GPIO_BSRR_BS6);
+    // /* DSR/DCD inputs configuration */
+    // GPIOB->CRL &= ~(GPIO_CRL_CNF4 | GPIO_CRL_CNF6 | GPIO_CRL_CNF7);
+    // GPIOB->CRL |= ( GPIO_CRL_CNF4_1 | GPIO_CRL_CNF6_1 | GPIO_CRL_CNF7_1);
+    // GPIOB->CRH &= ~(GPIO_CRH_CNF8 | GPIO_CRH_CNF9 | GPIO_CRH_CNF15);
+    // GPIOB->CRH |= (GPIO_CRH_CNF8_1 | GPIO_CRH_CNF9_1 | GPIO_CRH_CNF15_1);
+    // GPIOB->ODR |= (
+    //     GPIO_ODR_ODR15 | GPIO_ODR_ODR4 | GPIO_ODR_ODR6 |
+    //     GPIO_ODR_ODR7 | GPIO_ODR_ODR8 | GPIO_ODR_ODR9
+    // );
     /* USART & DMA Reset and Setup */
     RCC->AHBENR |= RCC_AHBENR_DMA1EN;
     RCC->APB2RSTR |= RCC_APB2RSTR_USART1RST;
