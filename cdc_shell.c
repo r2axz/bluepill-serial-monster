@@ -517,7 +517,6 @@ void cdc_shell_process_input(const void *buf, size_t count) {
                 cdc_shell_state = cdc_shell_expects_csn;
                 break;
             }
-            cdc_shell_state = cdc_shell_idle;
         case cdc_shell_expects_lf:
             cdc_shell_state = cdc_shell_idle;
             if (*buf_p == '\n') {
