@@ -258,7 +258,9 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
                           "and params are:\r\n"
                           "  output\t[pp|od]\r\n"
                           "  active\t[low|high]\r\n"
-                          "  pull\t\t[floating|up|down]",
+                          "  pull\t\t[floating|up|down]\r\n"
+                          "Example: uart 1 tx output od, sets UART1 TX output type to open-drain\r\n"
+                          "Example: uart 3 rts active high dcd active high pull low, allows to control multiple signals at once."
     },
     { 0 }
 };
