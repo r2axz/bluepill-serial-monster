@@ -178,6 +178,7 @@ static int cdc_shell_cmd_uart_set_output_type(int port, cdc_pin_t uart_pin, gpio
         gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
         if (pin->dir == gpio_dir_output) {
             pin->output = output;
+            usb_cdc_reconfigure_port_pin(port, uart_pin);
         } else {
             cdc_shell_write(cdc_shell_err_cannot_set_output_type_for_input, strlen(cdc_shell_err_cannot_set_output_type_for_input));
             return -1;
@@ -193,6 +194,7 @@ static int cdc_shell_cmd_uart_set_polarity(int port, cdc_pin_t uart_pin, gpio_po
         gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
         if (pin->func == gpio_func_general) {
             pin->polarity = polarity;
+            usb_cdc_reconfigure_port_pin(port, uart_pin);
         } else {
             cdc_shell_write(cdc_shell_err_cannot_change_polarity, strlen(cdc_shell_err_cannot_change_polarity));
             return -1;
@@ -208,6 +210,7 @@ static int cdc_shell_cmd_uart_set_pull_type(int port, cdc_pin_t uart_pin, gpio_p
         gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
         if (pin->dir == gpio_dir_input) {
             pin->pull = pull;
+            usb_cdc_reconfigure_port_pin(port, uart_pin);
         } else {
             cdc_shell_write(cdc_shell_err_cannot_set_pull_for_output, strlen(cdc_shell_err_cannot_set_pull_for_output));
             return -1;
@@ -228,7 +231,6 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
             }
             port = port - 1;
         }
-
         argv++;
         if (argc) {
             if (strcmp(*argv, "show") == 0) {
@@ -236,8 +238,8 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
             } else {
                 while(argc) {
                     argc--;
-                    cdc_pin_t uart_signal = _cdc_uart_signal_by_name(*argv);
-                    if (uart_signal == cdc_pin_unknown) {
+                    cdc_pin_t uart_pin = _cdc_uart_signal_by_name(*argv);
+                    if (uart_pin == cdc_pin_unknown) {
                         cdc_shell_write(cdc_shell_err_uart_unknown_signal, strlen(cdc_shell_err_uart_unknown_signal));
                         return;
                     }
@@ -252,7 +254,9 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                     if (output_type != gpio_output_unknown) {
                                         argc--;
                                         argv++;
-                                        cdc_shell_cmd_uart_set_output_type(port, uart_signal, output_type);
+                                        if (cdc_shell_cmd_uart_set_output_type(port, uart_pin, output_type) == -1) {
+                                            return;
+                                        }
                                     } else {
                                         cdc_shell_write(cdc_shell_err_uart_invalid_output_type, strlen(cdc_shell_err_uart_invalid_output_type));
                                         return;
@@ -269,7 +273,9 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                     if (polarity != gpio_polarity_unknown) {
                                         argc--;
                                         argv++;
-                                        cdc_shell_cmd_uart_set_polarity(port, uart_signal, polarity);
+                                        if (cdc_shell_cmd_uart_set_polarity(port, uart_pin, polarity) == -1) {
+                                            return;
+                                        }
                                     } else {
                                         cdc_shell_write(cdc_shell_err_uart_invalid_polarity, strlen(cdc_shell_err_uart_invalid_polarity));
                                         return;
@@ -286,7 +292,9 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                     if (pull != gpio_pull_unknown) {
                                         argc--;
                                         argv++;
-                                        cdc_shell_cmd_uart_set_pull_type(port, uart_signal, pull);
+                                        if (cdc_shell_cmd_uart_set_pull_type(port, uart_pin, pull) == -1) {
+                                            return;
+                                        }
                                     } else {
                                         cdc_shell_write(cdc_shell_err_uart_invalid_pull_type, strlen(cdc_shell_err_uart_invalid_pull_type));
                                         return;
