@@ -51,17 +51,20 @@ int cdc_shell_invoke_command(int argc, char *argv[], const cdc_shell_cmd_t *comm
 
 /* Set Commands */
 
-static const char *cdc_shell_err_uart_missing_arguments     = "Error, no arguments, use \"help uart\" for the list of arguments.\r\n";
-static const char *cdc_shell_err_uart_invalid_uart         = "Error, invalid UART number.\r\n";
-static const char *cdc_shell_err_uart_unknown_signal        = "Error, unknown signal name.\r\n";
-static const char *cdc_shell_err_uart_missing_signame       = "Error, expected \"show\" or a signal name, got nothing.\r\n";
-static const char *cdc_shell_err_uart_missing_params        = "Error, missing signal parameters.\r\n";
-static const char *cdc_shell_err_uart_missing_output_type   = "Error, missing output type.\r\n";
-static const char *cdc_shell_err_uart_invalid_output_type   = "Error, invalid output type.\r\n";
-static const char *cdc_shell_err_uart_missing_polarity      = "Error, missing polarity.\r\n";
-static const char *cdc_shell_err_uart_invalid_polarity      = "Error, invalid polarity.\r\n";
-static const char *cdc_shell_err_uart_missing_pull_type     = "Error, missing pull type.\r\n";
-static const char *cdc_shell_err_uart_invalid_pull_type     = "Error, invalid pull type.\r\n";
+static const char *cdc_shell_err_uart_missing_arguments             = "Error, no arguments, use \"help uart\" for the list of arguments.\r\n";
+static const char *cdc_shell_err_uart_invalid_uart                  = "Error, invalid UART number.\r\n";
+static const char *cdc_shell_err_uart_unknown_signal                = "Error, unknown signal name.\r\n";
+static const char *cdc_shell_err_uart_missing_signame               = "Error, expected \"show\" or a signal name, got nothing.\r\n";
+static const char *cdc_shell_err_uart_missing_params                = "Error, missing signal parameters.\r\n";
+static const char *cdc_shell_err_uart_missing_output_type           = "Error, missing output type.\r\n";
+static const char *cdc_shell_err_uart_invalid_output_type           = "Error, invalid output type.\r\n";
+static const char *cdc_shell_err_uart_missing_polarity              = "Error, missing polarity.\r\n";
+static const char *cdc_shell_err_uart_invalid_polarity              = "Error, invalid polarity.\r\n";
+static const char *cdc_shell_err_uart_missing_pull_type             = "Error, missing pull type.\r\n";
+static const char *cdc_shell_err_uart_invalid_pull_type             = "Error, invalid pull type.\r\n";
+static const char *cdc_shell_err_cannot_set_output_type_for_input   = "Error, cannot set output type for input pin.\r\n";
+static const char *cdc_shell_err_cannot_change_polarity             = "Error, cannot change polarity of alternate function pins.\r\n";
+static const char *cdc_shell_err_cannot_set_pull_for_output         = "Error, cannot pull type for output pin.\r\n";
 
 
 static const char *_cdc_uart_signal_names[cdc_pin_last] = {
@@ -168,28 +171,49 @@ static void cdc_shell_cmd_uart_show(int port) {
     }
 }
 
-static void cdc_shell_cmd_uart_set_output_type(int port, cdc_pin_t uart_signal, gpio_output_t output_type) {
+static int cdc_shell_cmd_uart_set_output_type(int port, cdc_pin_t uart_pin, gpio_output_t output) {
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
-        cdc_shell_write("set output type stub\r\n", strlen("set output type stub\r\n"));
+        gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
+        if (pin->dir == gpio_dir_output) {
+            pin->output = output;
+        } else {
+            cdc_shell_write(cdc_shell_err_cannot_set_output_type_for_input, strlen(cdc_shell_err_cannot_set_output_type_for_input));
+            return -1;
+        }
     }
+    return 0;
 }
 
-static void cdc_shell_cmd_uart_set_polarity(int port, cdc_pin_t uart_signal, gpio_polarity_t polarity) {
+static int cdc_shell_cmd_uart_set_polarity(int port, cdc_pin_t uart_pin, gpio_polarity_t polarity) {
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
-        cdc_shell_write("set polarity stub\r\n", strlen("set polarity stub\r\n"));
+        gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
+        if (pin->func == gpio_func_general) {
+            pin->polarity = polarity;
+        } else {
+            cdc_shell_write(cdc_shell_err_cannot_change_polarity, strlen(cdc_shell_err_cannot_change_polarity));
+            return -1;
+        }
     }
+    return 0;
 }
 
-static void cdc_shell_cmd_uart_set_pull_type(int port, cdc_pin_t uart_signal, gpio_pull_t polarity) {
+static int cdc_shell_cmd_uart_set_pull_type(int port, cdc_pin_t uart_pin, gpio_pull_t pull) {
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
-        cdc_shell_write("set pull stub\r\n", strlen("set pull stub\r\n"));
+        gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
+        if (pin->dir == gpio_dir_input) {
+            pin->pull = pull;
+        } else {
+            cdc_shell_write(cdc_shell_err_cannot_set_pull_for_output, strlen(cdc_shell_err_cannot_set_pull_for_output));
+            return -1;
+        }
     }
+    return 0;
 }
 
 static void cdc_shell_cmd_uart(int argc, char *argv[]) {
