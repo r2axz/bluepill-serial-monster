@@ -554,7 +554,13 @@ void USART3_IRQHandler() {
 
 /* Port Configuration & Control Lines Functions */
 
-void usb_cdc_configure_port(int port) {
+void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin) {
+    if (port < USB_CDC_NUM_PORTS && pin < cdc_pin_last) {
+        gpio_pin_init(&device_config_get()->cdc_config.port_config[port].pins[pin]);
+    }
+}
+
+static void usb_cdc_configure_port(int port) {
     const device_config_t *device_config = device_config_get();
     for (cdc_pin_t pin = 0; pin < cdc_pin_last; pin++) {
         gpio_pin_init(&device_config->cdc_config.port_config[port].pins[pin]);

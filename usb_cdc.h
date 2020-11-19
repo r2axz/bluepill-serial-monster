@@ -166,6 +166,25 @@ void usb_cdc_enable();
 void usb_cdc_suspend();
 void usb_cdc_frame();
 
+/* CDC Pins */
+
+typedef enum {
+    cdc_pin_rx,
+    cdc_pin_tx,
+    cdc_pin_rts,
+    cdc_pin_cts,
+    cdc_pin_dsr,
+    cdc_pin_dtr,
+    cdc_pin_dcd,
+    cdc_pin_unknown,
+    cdc_pin_last = cdc_pin_unknown,
+} __attribute__ ((packed)) cdc_pin_t;
+
+
+/* Pin Configuration Changed Hook */
+
+void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin);
+
 /* CDC Device Definitions */
 
 #define USB_CDC_NUM_PORTS                       3
