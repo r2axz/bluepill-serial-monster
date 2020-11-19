@@ -557,6 +557,11 @@ void USART3_IRQHandler() {
 void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin) {
     if (port < USB_CDC_NUM_PORTS && pin < cdc_pin_last) {
         gpio_pin_init(&device_config_get()->cdc_config.port_config[port].pins[pin]);
+        if (pin == cdc_pin_rts) {
+            usb_cdc_update_port_rts(port);
+        } else if (pin == cdc_pin_dtr) {
+            usb_cdc_update_port_dtr(port);
+        }
     }
 }
 
