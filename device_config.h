@@ -9,6 +9,7 @@ typedef struct {
     cdc_config_t cdc_config;
 } __attribute__ ((packed)) device_config_t;
 
-const device_config_t *device_config_get();
+void device_config_init();
+device_config_t *device_config_get();
 
 #endif /* DEVICE_CONFIG_H_ */

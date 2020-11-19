@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stm32f1xx.h>
 #include "device_config.h"
 
@@ -48,6 +49,12 @@ static const device_config_t default_device_config = {
     }
 };
 
-const device_config_t *device_config_get() {
-    return &default_device_config;
+static device_config_t currect_device_config;
+
+void device_config_init() {
+    memcpy(&currect_device_config, &default_device_config, sizeof(currect_device_config));
+}
+
+device_config_t *device_config_get() {
+    return &currect_device_config;
 }
