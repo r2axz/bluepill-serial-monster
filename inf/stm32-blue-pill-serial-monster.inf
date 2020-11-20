@@ -1,0 +1,66 @@
+; Windows USB CDC ACM Setup File
+
+; Based on INF template which was:
+;     Copyright (c) 2000 Microsoft Corporation
+;     Copyright (c) 2007 Microchip Technology Inc.
+; likely to be covered by the MLPL as found at:
+;    <http://msdn.microsoft.com/en-us/cc300389.aspx#MLPL>.
+; For use only on Windows operating systems.
+
+[Version]
+Signature   = "$Windows NT$"
+Class       = Ports
+ClassGuid   = {4D36E978-E325-11CE-BFC1-08002BE10318}
+Provider    = %PROVIDER%
+CatalogFile = stm32-blue-pill-serial-monster.cat
+DriverVer   = 11/19/2020,1.0.0.0
+PnpLockdown = 1
+
+[SourceDisksNames]
+
+[SourceDisksFiles]
+
+[Manufacturer]
+%MANUFACTURER% = DeviceList,NT,NTamd64
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[DeviceList.NT]
+%DESCRIPTION% = DriverInstall,USB\VID_1209&PID_FFFE&MI_00
+%DESCRIPTION% = DriverInstall,USB\VID_1209&PID_FFFE&MI_02
+%DESCRIPTION% = DriverInstall,USB\VID_1209&PID_FFFE&MI_04
+
+[DeviceList.NTamd64]
+%DESCRIPTION% = DriverInstall,USB\VID_1209&PID_FFFE&MI_00
+%DESCRIPTION% = DriverInstall,USB\VID_1209&PID_FFFE&MI_02
+%DESCRIPTION% = DriverInstall,USB\VID_1209&PID_FFFE&MI_04
+
+[DriverInstall.NT]
+Include     = mdmcpq.inf
+CopyFiles   = FakeModemCopyFileSection
+AddReg      = DriverInstall.NT.AddReg
+
+[DriverInstall.NT.AddReg]
+HKR,,DevLoader,,*ntkern
+HKR,,NTMPDriver,,usbser.sys
+HKR,,EnumPropPages32,,"MsPorts.dll,SerialPortPropPageProvider"
+
+[DriverInstall.NT.Services]
+AddService = usbser, 0x00000002, DriverServiceInstall
+
+[DriverServiceInstall]
+DisplayName     = %SERVICE%
+ServiceType     = 1
+StartType       = 3
+ErrorControl    = 1
+ServiceBinary   = %12%\usbser.sys
+LoadOrderGroup  = Base
+
+[FakeModemCopyFileSection]
+
+[Strings]
+PROVIDER            = "R2AXZ Kirill Kotyagin"
+MANUFACTURER        = "R2AXZ Kirill Kotyagin"
+DESCRIPTION         = "STM32 Blue Pill Serial Monster"
+SERVICE             = "STM32 Blue Pill Serial Monster"
