@@ -9,18 +9,14 @@ is available in many stores around the globe. The board contains decent
 hardware that supports _USB 2.0 Full-Speed_, has 3 independent _USARTs_
 and enough processing power to handle high-speed _UART_ communications.
 
-**Note**: some Chinese-made _Blue Pill_ boards have an incorrect pull-up
-resistor soldered to the _USB D+_ line (_PA12_) which prevents them from being
-successfully detected as a USB device by the host. There is an existing
-software workaround for this issue, but it is not reliable.
-
-This firmware does not contain the workaround for faulty Blue Pill boards and
-requires the incorrect resistor to be replaced with the right one. Please refer
-to the section [Fixing USB on Blue Pill Boards](#fixing-usb-on-blue-pill-boards)
+**Note**: some _Blue Pill_ clones have an incorrect pull-up resistor soldered
+to the _USB D+_ line (_PA12_) which prevents them from being successfully
+detected by the host. Please refer to
+[Fixing USB on Blue Pill Boards](#fixing-usb-on-blue-pill-boards)
 for more information.
 
-Some USB controllers work fine even with faulty _Blue Pill boards_. If your
-board appears to be OK with your computer, don't bother fixing it.
+Some USB controllers work fine even with faulty _Blue Pill_ boards. If your
+board works with your computer, don't bother fixing it.
 
 ## Features
 
@@ -32,7 +28,7 @@ board appears to be OK with your computer, don't bother fixing it.
 * 1, 1.5, and 2 stop bits;
 * Works with _CDC Class_ drives on _Linux_, _OS X_, and _Windows_;
 * Supports all standard baud rates;
-* Supports non-standard baud rates<sup>2</sup>;
+* Supports non-standard baud rates;
 * _DMA_ _RX_/_TX_ for high-speed communications;
 * _IDLE line_ detection for short response time;
 * No external dependencies other than CMSIS;
@@ -40,8 +36,6 @@ board appears to be OK with your computer, don't bother fixing it.
 (1) _UART1_ does not support hardware flow control because _RTS_/_CTS_ pins
 (_PA12_, _PA11_) are used for _USB_ communication and cannot be remapped.
 If you need hardware flow control, use _UART2_ or _UART3_.
-
-(2) As long as your CDC driver does not hesitate to ask.
 
 ## UART Signal Levels
 
