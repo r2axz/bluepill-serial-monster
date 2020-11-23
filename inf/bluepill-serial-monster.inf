@@ -12,7 +12,7 @@ Signature   = "$Windows NT$"
 Class       = Ports
 ClassGuid   = {4D36E978-E325-11CE-BFC1-08002BE10318}
 Provider    = %PROVIDER%
-CatalogFile = stm32-blue-pill-serial-monster.cat
+CatalogFile = bluepill-serial-monster.cat
 DriverVer   = 11/19/2020,1.0.0.0
 PnpLockdown = 1
 
@@ -62,5 +62,5 @@ LoadOrderGroup  = Base
 [Strings]
 PROVIDER            = "Kirill Kotyagin"
 MANUFACTURER        = "Kirill Kotyagin"
-DESCRIPTION         = "STM32 Blue Pill Serial Monster"
-SERVICE             = "STM32 Blue Pill Serial Monster"
+DESCRIPTION         = "Blue Pill Serial Monster"
+SERVICE             = "Blue Pill Serial Monster"
