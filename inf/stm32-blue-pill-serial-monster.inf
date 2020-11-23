@@ -60,7 +60,7 @@ LoadOrderGroup  = Base
 [FakeModemCopyFileSection]
 
 [Strings]
-PROVIDER            = "R2AXZ Kirill Kotyagin"
-MANUFACTURER        = "R2AXZ Kirill Kotyagin"
+PROVIDER            = "Kirill Kotyagin"
+MANUFACTURER        = "Kirill Kotyagin"
 DESCRIPTION         = "STM32 Blue Pill Serial Monster"
 SERVICE             = "STM32 Blue Pill Serial Monster"
