@@ -30,3 +30,6 @@ jobs:
         path: |
           *.hex
           *.bin
+          inf/*.inf
+          inf/*.cat
+
