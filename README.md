@@ -117,7 +117,7 @@ to a directory containing both **bluepill-serial-monster.inf** and **bluepill-se
 
 Alternatively, you can open _Windows Device Manager_, right-click on any of the
 _Bluepill Serial Monster_ devices, choose _Update driver_ and point Windows to
-the _INF_ file_ directory from there.
+the _INF_ file directory from there.
 
 ## Fixing USB on Blue Pill Boards
 
