@@ -32,3 +32,5 @@ jobs:
             README.md
             *.bin
             *.hex
+            inf/*.inf
+            inf/*.cat
