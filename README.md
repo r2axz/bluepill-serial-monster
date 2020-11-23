@@ -31,7 +31,8 @@ board works with your computer, don't bother fixing it.
 * Supports non-standard baud rates;
 * _DMA_ _RX_/_TX_ for high-speed communications;
 * _IDLE line_ detection for short response time;
-* No external dependencies other than CMSIS;
+* Signed _INF_ driver for _Windows XP, 7, and 8_;
+* No external dependencies other than _CMSIS_;
 
 (1) _UART1_ does not support hardware flow control because _RTS_/_CTS_ pins
 (_PA12_, _PA11_) are used for _USB_ communication and cannot be remapped.
@@ -104,13 +105,27 @@ You can also flash _STM32F103C8T6_ via a built-in serial bootloader. Visit
 [https://www.st.com/en/development-tools/flasher-stm32.html](https://www.st.com/en/development-tools/flasher-stm32.html)
 for instructions and software.
 
+## Windows Driver (WinXP, 7, 8)
+
+_Windows_ versions prior to _Windows 10_ require an _INF_ file that maps
+the device Vendor ID / Product ID to the Microsoft _usbser.sys_ CDC ACM driver.
+_Windows 10_ does not require this and loads the standard driver automatically.
+
+A signed _INF_ file for _Windows XP, 7, and 8_ is included in the distribution.
+To install the _INF_ file, plug in _bluepill-serial-monster_ and point _Windows_
+to a directory containing both **bluepill-serial-monster.inf** and **bluepill-serial-monster.cat** files during a new device installation.
+
+Alternatively, you can open _Windows Device Manager_, right-click on any of the
+_Bluepill Serial Monster_ devices, choose _Update driver_ and point Windows to
+the _INF_ file_ directory from there.
+
 ## Fixing USB on Blue Pill Boards
 
 _STM32 Blue Pill_ boards come in slightly different variations. Nevertheless,
 their schematic is very similar. Below you will find the instructions on how to
 identify and replace the incorrect USB pull-up resistor on any _Blue Pill_ board.
 
-With a digital multimeter, measure the resistance between **PA12** and **3.3 V**
+With a digital multimeter, measure resistance between **PA12** and **3.3 V**
 pads on the board. If the resistance reads close to **1.5k** (**1500 ohms**),
 then your board is either non-faulty or faulty for some other reason,
 and this section does not apply.
@@ -120,7 +135,7 @@ you will have to locate the incorrect resistor on the board and replace it
 with a **1.5k** or **1.8k** resistor.
 
 If your board has component names on it, locate **R10**. Otherwise, trace the
-board to see where the incorrect resistor is located.
+board to find the incorrect resistor.
 
 Once you identified the incorrect resistor, replace it with a **1.5k** or
 **1.8k** resistor.
