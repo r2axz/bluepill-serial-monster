@@ -2,6 +2,13 @@
 #include <stm32f1xx.h>
 #include "device_config.h"
 
+#define DEVICE_CONFIG_FLASH_SIZE    0x10000
+#define DEVICE_CONFIG_NUM_PAGES     2
+#define DEVICE_CONFIG_PAGE_SIZE     0x400U
+#define DEVICE_CONFIG_FLASH_END     (FLASH_BASE + DEVCONFIG_FLASH_SIZE)
+#define DEVICE_CONFIG_BASE_ADDR     (DEVCONFIG_FLASH_END - DEVCONFIG_NUM_PAGES * DEVCONFIG_PAGE_SIZE)
+#define DEVICE_CONFIG_MAGIC         0xDECFDECFUL
+
 static const device_config_t default_device_config = {
     .config_pin = { .port = GPIOB, .pin = 5, .dir = gpio_dir_input, .pull = gpio_pull_up, .polarity = gpio_polarity_low },
     .cdc_config = {
@@ -51,8 +58,14 @@ static const device_config_t default_device_config = {
 
 static device_config_t currect_device_config;
 
+static int device_config_load() {
+    return -1;
+}
+
 void device_config_init() {
-    memcpy(&currect_device_config, &default_device_config, sizeof(currect_device_config));
+    if (device_config_load() == -1) {
+        memcpy(&currect_device_config, &default_device_config, sizeof(currect_device_config));
+    }
 }
 
 device_config_t *device_config_get() {
