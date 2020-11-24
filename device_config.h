@@ -1,3 +1,9 @@
+/*
+ * MIT License 
+ * 
+ * Copyright (c) 2020 Kirill Kotyagin
+ */
+
 #ifndef DEVICE_CONFIG_H
 #define DEVICE_CONFIG_H
 

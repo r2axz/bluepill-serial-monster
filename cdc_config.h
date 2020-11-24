@@ -1,3 +1,9 @@
+/*
+ * MIT License 
+ * 
+ * Copyright (c) 2020 Kirill Kotyagin
+ */
+
 #ifndef CDC_CONFIG_H
 #define CDC_CONFIG_H
 

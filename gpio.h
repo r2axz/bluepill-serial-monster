@@ -1,3 +1,9 @@
+/*
+ * MIT License 
+ * 
+ * Copyright (c) 2020 Kirill Kotyagin
+ */
+
 #ifndef GPIO_H
 #define GPIO_H
 

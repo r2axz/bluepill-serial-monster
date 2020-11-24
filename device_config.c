@@ -1,3 +1,9 @@
+/*
+ * MIT License 
+ * 
+ * Copyright (c) 2020 Kirill Kotyagin
+ */
+
 #include <string.h>
 #include <stm32f1xx.h>
 #include <limits.h>

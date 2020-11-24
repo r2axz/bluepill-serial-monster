@@ -1,3 +1,9 @@
+/*
+ * MIT License 
+ * 
+ * Copyright (c) 2020 Kirill Kotyagin
+ */
+
 #include "gpio.h"
 
 static void _gpio_enable_port(GPIO_TypeDef *port) {
