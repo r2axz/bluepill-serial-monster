@@ -13,7 +13,7 @@
 #define DEVICE_CONFIG_NUM_PAGES     2
 #define DEVICE_CONFIG_PAGE_SIZE     0x400UL
 #define DEVICE_CONFIG_FLASH_END     (FLASH_BASE + DEVICE_CONFIG_FLASH_SIZE)
-#define DEVICE_CONFIG_BASE_ADDR     (DEVICE_CONFIG_FLASH_END - DEVICE_CONFIG_NUM_PAGES * DEVICE_CONFIG_PAGE_SIZE)
+#define DEVICE_CONFIG_BASE_ADDR     ((void*)(DEVICE_CONFIG_FLASH_END - DEVICE_CONFIG_NUM_PAGES * DEVICE_CONFIG_PAGE_SIZE))
 #define DEVICE_CONFIG_MAGIC         0xDECFDECFUL
 
 static const device_config_t default_device_config = {
@@ -87,11 +87,15 @@ static uint32_t device_config_calc_crc(const device_config_t *device_config) {
 }
 
 const static device_config_t* device_config_get_stored() {
-    const device_config_t *stored_config = (device_config_t*)DEVICE_CONFIG_BASE_ADDR;
-    if (stored_config->magic == DEVICE_CONFIG_MAGIC) {
-        if (device_config_calc_crc(stored_config) == stored_config->crc) {
+    uint8_t *config_page = (uint8_t*)DEVICE_CONFIG_BASE_ADDR;
+    size_t config_pages = DEVICE_CONFIG_NUM_PAGES;
+    while (--config_pages) {
+        const device_config_t *stored_config = (device_config_t*)config_page;
+        if ((stored_config->magic == DEVICE_CONFIG_MAGIC) &&
+            (device_config_calc_crc(stored_config) == stored_config->crc)) {
             return stored_config;
         }
+        config_page += DEVICE_CONFIG_PAGE_SIZE;
     }
     return 0;
 }
