@@ -321,14 +321,27 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
 }
 
 
-static const char *cdc_shell_err_config_missing_arguments = "Error, no arguments, use \"help config\" for the list of arguments.\r\n";
+static const char *cdc_shell_err_config_missing_arguments = "Error, invalid or missing arguments, use \"help config\" for the list of arguments.\r\n";
+
+static void cdc_shell_cmd_config_save() {
+    device_config_store();
+}
+
+static void cdc_shell_cmd_config_reset() {
+    device_config_reset();
+    usb_cdc_reconfigure();
+}
 
 static void cdc_shell_cmd_config(int argc, char *argv[]) {
-    if (argc) {
-        
-    } else {
-        cdc_shell_write(cdc_shell_err_config_missing_arguments, strlen(cdc_shell_err_config_missing_arguments));
+    if (argc == 1) {
+        if (strcmp(*argv, "save") == 0) {
+            return cdc_shell_cmd_config_save();
+        }
+        if (strcmp(*argv, "reset") == 0) {
+            return cdc_shell_cmd_config_reset();
+        }
     }
+    cdc_shell_write(cdc_shell_err_config_missing_arguments, strlen(cdc_shell_err_config_missing_arguments));
 }
 
 static void cdc_shell_cmd_help(int argc, char *argv[]);
@@ -343,23 +356,25 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
     {
         .cmd            = "config",
         .handler        = cdc_shell_cmd_config,
-        .description    = "store and reset configuration paramters in flash",
-        .usage          = "Usage: config store|reset",
+        .description    = "save and reset configuration paramters in the device flash memory",
+        .usage          = "Usage: config save|reset\r\n"
+                          "Use: \"config save\" to permanently save device configuration.\r\n"
+                          "Use: \"config reset\" to reset device configuration to default.",
     },
     { 
         .cmd            = "uart",
         .handler        = cdc_shell_cmd_uart,
         .description    = "set and view UART parameters",
         .usage          = "Usage: uart port-number|all show|signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\r\n"
-                          "Use uart port-number|all show, to view current UART configuration.\r\n"
-                          "Use uart port-number|all signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\r\n"
+                          "Use \"uart port-number|all show\" to view current UART configuration.\r\n"
+                          "Use \"uart port-number|all signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\"\r\n"
                           "to set UART parameters, where signal names are rx, tx, rts, cts, dsr, dtr, dcd,\r\n"
                           "and params are:\r\n"
                           "  output\t[pp|od]\r\n"
                           "  active\t[low|high]\r\n"
                           "  pull\t\t[floating|up|down]\r\n"
-                          "Example: uart 1 tx output od, sets UART1 TX output type to open-drain\r\n"
-                          "Example: uart 3 rts active high dcd active high pull down, allows to control multiple signals at once."
+                          "Example: \"uart 1 tx output od\" sets UART1 TX output type to open-drain\r\n"
+                          "Example: \"uart 3 rts active high dcd active high pull down\" allows to set multiple parameters at once."
     },
     { 0 }
 };

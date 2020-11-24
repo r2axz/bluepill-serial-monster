@@ -574,6 +574,12 @@ static void usb_cdc_configure_port(int port) {
     }
 }
 
+void usb_cdc_reconfigure() {
+    for (int port = 0; port < USB_CDC_NUM_PORTS; port++) {
+        usb_cdc_configure_port(port);
+    }
+}
+
 /* Device Lifecycle */
 
 void usb_cdc_reset() {

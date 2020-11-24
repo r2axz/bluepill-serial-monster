@@ -16,5 +16,6 @@ void device_config_init();
 device_config_t *device_config_get();
 
 void device_config_store();
+void device_config_reset();
 
 #endif /* DEVICE_CONFIG_H_ */

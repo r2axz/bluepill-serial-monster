@@ -6,7 +6,7 @@
 #define DEVICE_CONFIG_FLASH_SIZE    0x10000UL
 #define DEVICE_CONFIG_NUM_PAGES     2
 #define DEVICE_CONFIG_PAGE_SIZE     0x400UL
-#define DEVICE_CONFIG_FLASH_END     (FLASH_BASE + DEVICE_CONFIG_PAGE_SIZE)
+#define DEVICE_CONFIG_FLASH_END     (FLASH_BASE + DEVICE_CONFIG_FLASH_SIZE)
 #define DEVICE_CONFIG_BASE_ADDR     (DEVICE_CONFIG_FLASH_END - DEVICE_CONFIG_NUM_PAGES * DEVICE_CONFIG_PAGE_SIZE)
 #define DEVICE_CONFIG_MAGIC         0xDECFDECFUL
 
@@ -57,9 +57,9 @@ static const device_config_t default_device_config = {
     }
 };
 
-static device_config_t currect_device_config;
+static device_config_t current_device_config;
 
-static int device_config_is_crc_valid(const device_config_t *device_config) {
+static uint32_t device_config_calc_crc(const device_config_t *device_config) {
     uint32_t *word_p = (uint32_t*)device_config;
     size_t bytes_left = offsetof(device_config_t, crc);
     CRC->CR |= CRC_CR_RESET;
@@ -72,19 +72,18 @@ static int device_config_is_crc_valid(const device_config_t *device_config) {
         uint32_t tail = 0;
         uint8_t *byte_p = (uint8_t*)word_p;
         for (int i = 0; i < bytes_left; i++) {
-            tail |= (uint32_t)*byte_p << (shift);
-            byte_p++;
+            tail |= (uint32_t)(*byte_p++) << (shift);
             shift += CHAR_BIT;
         }
         CRC->DR = tail;
     }
-    return CRC->DR == device_config->crc;
+    return CRC->DR;
 }
 
 const static device_config_t* device_config_get_stored() {
     const device_config_t *stored_config = (device_config_t*)DEVICE_CONFIG_BASE_ADDR;
     if (stored_config->magic == DEVICE_CONFIG_MAGIC) {
-        if (device_config_is_crc_valid(stored_config)) {
+        if (device_config_calc_crc(stored_config) == stored_config->crc) {
             return stored_config;
         }
     }
@@ -92,18 +91,53 @@ const static device_config_t* device_config_get_stored() {
 }
 
 void device_config_init() {
+    RCC->AHBENR |= RCC_AHBENR_CRCEN;
     const device_config_t *stored_config = device_config_get_stored();
     if (stored_config == 0) {
         stored_config = &default_device_config;
     }
-    memcpy(&currect_device_config, stored_config, sizeof(*stored_config));
+    memcpy(&current_device_config, stored_config, sizeof(*stored_config));
 }
 device_config_t *device_config_get() {
-    return &currect_device_config;
+    return &current_device_config;
 }
 
 void device_config_store() {
-    FLASH->KEYR = 0x45670123;
-    FLASH->KEYR = 0xCDEF89AB;
+    device_config_t *stored_config = (device_config_t*)DEVICE_CONFIG_BASE_ADDR;
+    uint16_t *src_word_p = (uint16_t*)&current_device_config;
+    uint16_t *dst_word_p = (uint16_t*)stored_config;
+    size_t bytes_left = sizeof(*stored_config);
+    if (FLASH->CR & FLASH_CR_LOCK) {
+        FLASH->KEYR = 0x45670123;
+        FLASH->KEYR = 0xCDEF89AB;
+    }
+    while (FLASH->SR & FLASH_SR_BSY);
+    FLASH->SR = FLASH->SR & FLASH_SR_EOP;
+    FLASH->CR |= FLASH_CR_PER;
+    FLASH->AR = (uint32_t)stored_config;
+    FLASH->CR |=  FLASH_CR_STRT;
+    while (!(FLASH->SR & FLASH_SR_EOP));
+    FLASH->SR = FLASH_SR_EOP;
+    FLASH->CR &= ~FLASH_CR_PER;
+    current_device_config.magic = DEVICE_CONFIG_MAGIC;
+    current_device_config.crc = device_config_calc_crc(&current_device_config);
+    FLASH->CR |= FLASH_CR_PG;
+    while (bytes_left > 1) {
+        *dst_word_p++ = *src_word_p++;
+        while (!(FLASH->SR & FLASH_SR_EOP));
+        FLASH->SR = FLASH_SR_EOP;
+        bytes_left -= sizeof(*dst_word_p);
+    }
+    if (bytes_left) {
+        *dst_word_p = (uint16_t)(*(uint8_t*)src_word_p);
+        while (!(FLASH->SR & FLASH_SR_EOP));
+        FLASH->SR = FLASH_SR_EOP;
+    }
+    FLASH->CR &= ~(FLASH_CR_PG);
     FLASH->CR |= FLASH_CR_LOCK;
+}
+
+void device_config_reset() {
+    memcpy(&current_device_config, &default_device_config, sizeof(default_device_config));
+    device_config_store();
 }
