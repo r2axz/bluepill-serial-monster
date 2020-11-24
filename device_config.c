@@ -113,7 +113,7 @@ void device_config_store() {
     }
     while (FLASH->SR & FLASH_SR_BSY);
     FLASH->SR = FLASH->SR & FLASH_SR_EOP;
-    FLASH->CR |= FLASH_CR_PER;
+    FLASH->CR = FLASH_CR_PER;
     FLASH->AR = (uint32_t)stored_config;
     FLASH->CR |=  FLASH_CR_STRT;
     while (!(FLASH->SR & FLASH_SR_EOP));
