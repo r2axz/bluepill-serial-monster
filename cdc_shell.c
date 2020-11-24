@@ -37,7 +37,7 @@ typedef struct {
 
 /* Shell Helper Functions */
 
-int cdc_shell_invoke_command(int argc, char *argv[], const cdc_shell_cmd_t *commands) {
+static int cdc_shell_invoke_command(int argc, char *argv[], const cdc_shell_cmd_t *commands) {
     const cdc_shell_cmd_t *shell_cmd = commands;
     while (shell_cmd->cmd) {
         if (strcmp(shell_cmd->cmd, *argv) == 0) {
@@ -320,6 +320,17 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
     } 
 }
 
+
+static const char *cdc_shell_err_config_missing_arguments = "Error, no arguments, use \"help config\" for the list of arguments.\r\n";
+
+static void cdc_shell_cmd_config(int argc, char *argv[]) {
+    if (argc) {
+        
+    } else {
+        cdc_shell_write(cdc_shell_err_config_missing_arguments, strlen(cdc_shell_err_config_missing_arguments));
+    }
+}
+
 static void cdc_shell_cmd_help(int argc, char *argv[]);
 
 static const cdc_shell_cmd_t cdc_shell_commands[] = {
@@ -328,6 +339,12 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
         .handler        = cdc_shell_cmd_help,
         .description    = "shows this help message, use \"help command-name\" to get command-specific help",
         .usage          = "Usage: help [command-name]",
+    },
+    {
+        .cmd            = "config",
+        .handler        = cdc_shell_cmd_config,
+        .description    = "store and reset configuration paramters in flash",
+        .usage          = "Usage: config store|reset",
     },
     { 
         .cmd            = "uart",

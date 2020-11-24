@@ -6,11 +6,11 @@
 #include "cdc_config.h"
 
 typedef struct {
-    uint32_t magic;
-    gpio_pin_t config_pin;
-    cdc_config_t cdc_config;
-    uint32_t crc;
-} __attribute__ ((packed)) device_config_t;
+    uint32_t        magic;
+    gpio_pin_t      config_pin;
+    cdc_config_t    cdc_config;
+    uint32_t        crc; /* should be the last member of the struct */
+} __attribute__ ((packed, aligned(4))) device_config_t;
 
 void device_config_init();
 device_config_t *device_config_get();

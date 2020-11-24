@@ -1,12 +1,13 @@
 #include <string.h>
 #include <stm32f1xx.h>
+#include <limits.h>
 #include "device_config.h"
 
-#define DEVICE_CONFIG_FLASH_SIZE    0x10000
+#define DEVICE_CONFIG_FLASH_SIZE    0x10000UL
 #define DEVICE_CONFIG_NUM_PAGES     2
-#define DEVICE_CONFIG_PAGE_SIZE     0x400U
-#define DEVICE_CONFIG_FLASH_END     (FLASH_BASE + DEVCONFIG_FLASH_SIZE)
-#define DEVICE_CONFIG_BASE_ADDR     (DEVCONFIG_FLASH_END - DEVCONFIG_NUM_PAGES * DEVCONFIG_PAGE_SIZE)
+#define DEVICE_CONFIG_PAGE_SIZE     0x400UL
+#define DEVICE_CONFIG_FLASH_END     (FLASH_BASE + DEVICE_CONFIG_PAGE_SIZE)
+#define DEVICE_CONFIG_BASE_ADDR     (DEVICE_CONFIG_FLASH_END - DEVICE_CONFIG_NUM_PAGES * DEVICE_CONFIG_PAGE_SIZE)
 #define DEVICE_CONFIG_MAGIC         0xDECFDECFUL
 
 static const device_config_t default_device_config = {
@@ -58,16 +59,51 @@ static const device_config_t default_device_config = {
 
 static device_config_t currect_device_config;
 
-static int device_config_load() {
-    return -1;
+static int device_config_is_crc_valid(const device_config_t *device_config) {
+    uint32_t *word_p = (uint32_t*)device_config;
+    size_t bytes_left = offsetof(device_config_t, crc);
+    CRC->CR |= CRC_CR_RESET;
+    while (bytes_left > sizeof(*word_p)) {
+        CRC->DR = *word_p++;
+        bytes_left -= sizeof(*word_p);
+    }
+    if (bytes_left) {
+        uint32_t shift = 0;
+        uint32_t tail = 0;
+        uint8_t *byte_p = (uint8_t*)word_p;
+        for (int i = 0; i < bytes_left; i++) {
+            tail |= (uint32_t)*byte_p << (shift);
+            byte_p++;
+            shift += CHAR_BIT;
+        }
+        CRC->DR = tail;
+    }
+    return CRC->DR == device_config->crc;
+}
+
+const static device_config_t* device_config_get_stored() {
+    const device_config_t *stored_config = (device_config_t*)DEVICE_CONFIG_BASE_ADDR;
+    if (stored_config->magic == DEVICE_CONFIG_MAGIC) {
+        if (device_config_is_crc_valid(stored_config)) {
+            return stored_config;
+        }
+    }
+    return 0;
 }
 
 void device_config_init() {
-    if (device_config_load() == -1) {
-        memcpy(&currect_device_config, &default_device_config, sizeof(currect_device_config));
+    const device_config_t *stored_config = device_config_get_stored();
+    if (stored_config == 0) {
+        stored_config = &default_device_config;
     }
+    memcpy(&currect_device_config, stored_config, sizeof(*stored_config));
 }
-
 device_config_t *device_config_get() {
     return &currect_device_config;
+}
+
+void device_config_store() {
+    FLASH->KEYR = 0x45670123;
+    FLASH->KEYR = 0xCDEF89AB;
+    FLASH->CR |= FLASH_CR_LOCK;
 }
