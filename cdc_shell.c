@@ -192,7 +192,7 @@ static int cdc_shell_cmd_uart_set_polarity(int port, cdc_pin_t uart_pin, gpio_po
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
         gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
-        if (pin->func == gpio_func_general) {
+        if (pin->func == gpio_func_general && uart_pin != cdc_pin_rx) {
             pin->polarity = polarity;
             usb_cdc_reconfigure_port_pin(port, uart_pin);
         } else {
@@ -324,7 +324,7 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
 static const char *cdc_shell_err_config_missing_arguments = "Error, invalid or missing arguments, use \"help config\" for the list of arguments.\r\n";
 
 static void cdc_shell_cmd_config_save() {
-    device_config_store();
+    device_config_save();
 }
 
 static void cdc_shell_cmd_config_reset() {

@@ -89,7 +89,7 @@ static uint32_t device_config_calc_crc(const device_config_t *device_config) {
 const static device_config_t* device_config_get_stored() {
     uint8_t *config_page = (uint8_t*)DEVICE_CONFIG_BASE_ADDR;
     size_t config_pages = DEVICE_CONFIG_NUM_PAGES;
-    while (--config_pages) {
+    while (config_pages--) {
         const device_config_t *stored_config = (device_config_t*)config_page;
         if ((stored_config->magic == DEVICE_CONFIG_MAGIC) &&
             (device_config_calc_crc(stored_config) == stored_config->crc)) {
@@ -112,11 +112,27 @@ device_config_t *device_config_get() {
     return &current_device_config;
 }
 
-void device_config_store() {
-    device_config_t *stored_config = (device_config_t*)DEVICE_CONFIG_BASE_ADDR;
+void device_config_save() {
+    uint16_t *last_config_magic = 0;
+    uint8_t *config_page = (uint8_t*)DEVICE_CONFIG_BASE_ADDR;
+    size_t config_pages = DEVICE_CONFIG_NUM_PAGES;
     uint16_t *src_word_p = (uint16_t*)&current_device_config;
-    uint16_t *dst_word_p = (uint16_t*)stored_config;
-    size_t bytes_left = sizeof(*stored_config);
+    uint16_t *dst_word_p;
+    size_t bytes_left = sizeof(current_device_config);
+    while (config_pages--) {
+        const device_config_t *stored_config = (device_config_t*)config_page;
+        if ((stored_config->magic == DEVICE_CONFIG_MAGIC) &&
+            (device_config_calc_crc(stored_config) == stored_config->crc)) {
+            last_config_magic = (uint16_t*)&stored_config->magic;
+        } else {
+            break;
+        }
+        config_page += DEVICE_CONFIG_PAGE_SIZE;
+    }
+    if (config_pages == 0) {
+        config_page = (uint8_t*)DEVICE_CONFIG_BASE_ADDR;
+    }
+    dst_word_p = (uint16_t*)config_page;
     if (FLASH->CR & FLASH_CR_LOCK) {
         FLASH->KEYR = 0x45670123;
         FLASH->KEYR = 0xCDEF89AB;
@@ -124,7 +140,7 @@ void device_config_store() {
     while (FLASH->SR & FLASH_SR_BSY);
     FLASH->SR = FLASH->SR & FLASH_SR_EOP;
     FLASH->CR = FLASH_CR_PER;
-    FLASH->AR = (uint32_t)stored_config;
+    FLASH->AR = (uint32_t)config_page;
     FLASH->CR |=  FLASH_CR_STRT;
     while (!(FLASH->SR & FLASH_SR_EOP));
     FLASH->SR = FLASH_SR_EOP;
@@ -143,11 +159,16 @@ void device_config_store() {
         while (!(FLASH->SR & FLASH_SR_EOP));
         FLASH->SR = FLASH_SR_EOP;
     }
+    if (last_config_magic) {
+        *last_config_magic = 0x0000;
+        while (!(FLASH->SR & FLASH_SR_EOP));
+        FLASH->SR = FLASH_SR_EOP;
+    }
     FLASH->CR &= ~(FLASH_CR_PG);
     FLASH->CR |= FLASH_CR_LOCK;
 }
 
 void device_config_reset() {
     memcpy(&current_device_config, &default_device_config, sizeof(default_device_config));
-    device_config_store();
+    device_config_save();
 }
