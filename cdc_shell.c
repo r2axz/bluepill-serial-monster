@@ -192,7 +192,7 @@ static int cdc_shell_cmd_uart_set_polarity(int port, cdc_pin_t uart_pin, gpio_po
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
         gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
-        if (pin->func == gpio_func_general && uart_pin != cdc_pin_rx) {
+        if (pin->func == gpio_func_general && (uart_pin != cdc_pin_rx) && (uart_pin != cdc_pin_cts)) {
             pin->polarity = polarity;
             usb_cdc_reconfigure_port_pin(port, uart_pin);
         } else {
