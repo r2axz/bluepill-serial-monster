@@ -35,6 +35,7 @@ board appears to be OK with your computer, don't bother fixing it.
 * Supports non-standard baud rates<sup>2</sup>;
 * _DMA_ _RX_/_TX_ for high-speed communications;
 * _IDLE line_ detection for short response time;
+* Built-in command shell for device parameters configuration;
 * No external dependencies other than CMSIS;
 
 (1) _UART1_ does not support hardware flow control because _RTS_/_CTS_ pins
