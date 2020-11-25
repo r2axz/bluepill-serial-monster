@@ -119,17 +119,15 @@ void device_config_save() {
     uint16_t *src_word_p = (uint16_t*)&current_device_config;
     uint16_t *dst_word_p;
     size_t bytes_left = sizeof(current_device_config);
-    while (config_pages--) {
+    while (config_pages-- && (last_config_magic == 0)) {
         const device_config_t *stored_config = (device_config_t*)config_page;
         if ((stored_config->magic == DEVICE_CONFIG_MAGIC) &&
             (device_config_calc_crc(stored_config) == stored_config->crc)) {
             last_config_magic = (uint16_t*)&stored_config->magic;
-        } else {
-            break;
         }
         config_page += DEVICE_CONFIG_PAGE_SIZE;
     }
-    if (config_pages == 0) {
+    if (config_page == ((uint8_t*)DEVICE_CONFIG_BASE_ADDR + (DEVICE_CONFIG_NUM_PAGES * DEVICE_CONFIG_PAGE_SIZE))) {
         config_page = (uint8_t*)DEVICE_CONFIG_BASE_ADDR;
     }
     dst_word_p = (uint16_t*)config_page;
