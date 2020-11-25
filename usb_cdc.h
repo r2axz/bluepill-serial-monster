@@ -8,6 +8,7 @@
 #define USB_CDC_H
 
 #include <stdint.h>
+#include "usb_core.h"
 
 /* USB CDC Class Codes */
 
@@ -165,10 +166,31 @@ void usb_cdc_enable();
 void usb_cdc_suspend();
 void usb_cdc_frame();
 
+/* CDC Pins */
+
+typedef enum {
+    cdc_pin_rx,
+    cdc_pin_tx,
+    cdc_pin_rts,
+    cdc_pin_cts,
+    cdc_pin_dsr,
+    cdc_pin_dtr,
+    cdc_pin_dcd,
+    cdc_pin_unknown,
+    cdc_pin_last = cdc_pin_unknown,
+} __attribute__ ((packed)) cdc_pin_t;
+
+
+/* Configuration Changed Hooks */
+
+void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin);
+void usb_cdc_reconfigure();
+
 /* CDC Device Definitions */
 
-#define USB_CDC_NUM_PORTS                   3
-#define USB_CDC_BUF_SIZE                    0x400
-#define USB_CDC_DSR_DCD_POLLING_INTERVAL    20 /* ms */
+#define USB_CDC_NUM_PORTS                       3
+#define USB_CDC_BUF_SIZE                        0x400
+#define USB_CDC_CRTL_LINES_POLLING_INTERVAL     20 /* ms */
+#define USB_CDC_CONFIG_PORT                     0
 
 #endif /* USB_CDC_H */
