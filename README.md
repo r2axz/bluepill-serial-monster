@@ -73,7 +73,7 @@ or damage may occur.**
 
 Note: **5 V** tolerant input pins are shown **in bold**.
 
-## Control Signals
+## Control Signals (Default Configuration)
 
 **RTS**, **CTS**, **DSR**, **DTR**, **DCD** are **active-low** signals.
 
@@ -93,6 +93,151 @@ by the host. Please take this behaviour into account if you rely on the
 **DSR** and **DCD** are polled 50 times per second.
 
 _UART DMA RX/TX_ buffer size is **1024** bytes.
+
+## Advanced Configuration
+
+_bluepill-serial-monster_ provides a configuration shell that allows
+controlling various parameters of the UART signal lines.
+
+To access the configuration shell, open _UART1_ with any terminal emulator
+application (such as _screen_, _Tera Term_, etc.) and connect **PB5** to ground. Serial port settings do not matter.
+
+You should see the configuration shell prompt:
+
+```text
+*******************************
+* Configuration Shell Started *
+*******************************
+
+>
+```
+
+The configuration shell has minimal support for ANSI escape sequences. You can
+use the arrow keys to move the cursor when editing a command, erase text with _Backspace_, and insert text anywhere in the command. You can also recall the
+last command by pressing _UP_.
+
+Command and parameter names are case-sensitive.
+
+To get the list of available commands, type:
+
+```text
+>help
+```
+
+To get command-specific help, type:
+
+```text
+>help command-name
+```
+
+### UART Port Parameters
+
+UART port parameters can be viewed and set with the _uart_ command:
+
+```text
+>help uart
+uart: set and view UART parameters
+Usage: uart port-number|all show|signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]
+Use "uart port-number|all show" to view current UART configuration.
+Use "uart port-number|all signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]"
+to set UART parameters, where signal names are rx, tx, rts, cts, dsr, dtr, dcd,
+and params are:
+  output        [pp|od]
+  active        [low|high]
+  pull          [floating|up|down]
+Example: "uart 1 tx output od" sets UART1 TX output type to open-drain
+Example: "uart 3 rts active high dcd active high pull down" allows to set multiple parameters at once.
+```
+
+Changes to the UART parameters are applied instantly; however, the configuration
+is not stored in the flash memory until you explicitly save it with:
+
+```text
+>config save
+```
+
+To view current configuration of all UART ports, type:
+
+```text
+>uart all show
+```
+
+To view current configuration of a particular UART port, type:
+
+```text
+>uart port-number show
+```
+
+where _port-number_ is in range of 1 to 3.
+
+Output type can be set for any output signal. Available output types are:
+
+* **pp** for push-pull output;
+* **od** for open-drain output;
+
+Example:
+
+```text
+uart 1 tx output od
+```
+
+Pull type can be set for any input signal. Available pull types are:
+
+* **floating** for floating input;
+* **up** for weak pull up;
+* **down** for weak pull down;
+
+Example:
+
+```text
+uart 1 dcd pull up
+```
+
+Signal polarity can be set for all input and output signals except for **RX**,
+**TX**, and **CTS**. Available signal polarities are:
+
+* **low** for active-low signal polarity;
+* **high** for active-high signal polarity;
+
+Example:
+
+```text
+uart 1 rts active high
+```
+
+It is possible to set multiple signal parameters for multiple signals in one
+command:
+
+```text
+uart 1 tx output od rts output od active high
+```
+
+If the uart command encounters a syntax error or an invalid parameter in
+the middle of a multiple parameters command line, it stops execution
+immediately. However, it does not roll back valid parameters set before
+the point where the error occured.
+
+It is also possible to set signal parameters for multiple ports in one command:
+
+```text
+uart all tx output od
+```
+
+### Saving and Resetting Configuration
+
+To permanently save current device configuration, type:
+
+```text
+config save
+```
+
+To reset the device to the default settings, type:
+
+```text
+config reset
+```
+
+The default configuration is automatically stored in the flash memory after reset.
 
 ## Flashing Firmware
 
