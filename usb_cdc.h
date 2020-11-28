@@ -176,6 +176,7 @@ typedef enum {
     cdc_pin_dsr,
     cdc_pin_dtr,
     cdc_pin_dcd,
+    cdc_pin_ri,
     cdc_pin_unknown,
     cdc_pin_last = cdc_pin_unknown,
 } __attribute__ ((packed)) cdc_pin_t;
