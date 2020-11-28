@@ -67,12 +67,17 @@ or damage may occur.**
 |   DTR  |      OUT      |      PA4      |      PA5      |      PA6      |
 |   DCD  |      IN       |    **PB15**   |    **PB8**    |    **PB9**    |
 |   RI   |      IN       |    **PB3**    |    **PB12**   |    **PA8**    |
+|   TXA  |      OUT      |    **PB0**    |    **PB1**    |    **PA7**    |
 
 Note: **5 V** tolerant input pins are shown **in bold**.
 
 ## Control Signals (Default Configuration)
 
-**RTS**, **CTS**, **DSR**, **DTR**, **DCD**, **RI** are **active-low** signals.
+**RTS**, **CTS**, **DSR**, **DTR**, **DCD**, **RI** are **active-low** signals,
+**TXA** is active-high signal.
+
+**TXA** is active when UART is transmitting data and can be used to control
+**DE** and **/RE** signals of RS-485 converters and such.
 
 **DSR**, **DTR**, and **DCD**, **RI** are connected to the internal _weak pull-up_
 resistors, so they remain inactive at rest.
