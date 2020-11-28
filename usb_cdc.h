@@ -95,6 +95,7 @@ typedef uint16_t usb_cdc_serial_state_t;
 
 #define USB_CDC_SERIAL_STATE_DCD            0x01
 #define USB_CDC_SERIAL_STATE_DSR            0x02
+#define USB_CDC_SERIAL_STATE_RI             0x08
 #define USB_CDC_SERIAL_STATE_PARITY_ERROR   0x20
 #define USB_CDC_SERIAL_STATE_OVERRUN        0x40
 
