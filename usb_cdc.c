@@ -44,6 +44,7 @@ typedef struct {
     uint8_t                 serial_state_pending;
     uint8_t                 rts_active;
     uint8_t                 dtr_active;
+    uint8_t                 txa_active;
 } usb_cdc_state_t;
 
 static usb_cdc_state_t usb_cdc_states[USB_CDC_NUM_PORTS];
@@ -230,6 +231,21 @@ static void usb_cdc_set_port_rts(int port, int rts_active) {
     if ((port < USB_CDC_NUM_PORTS)) {
         usb_cdc_states[port].rts_active = rts_active;
         usb_cdc_update_port_rts(port);
+    }
+}
+
+static void usb_cdc_update_port_txa(int port) {
+    if (port < USB_CDC_NUM_PORTS) {
+        usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
+        const gpio_pin_t *txa_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa];
+        gpio_pin_set(txa_pin, cdc_state->txa_active);
+    }
+}
+
+static void usb_cdc_set_port_txa(int port, int txa_active) {
+    if ((port < USB_CDC_NUM_PORTS)) {
+        usb_cdc_states[port].txa_active = txa_active;
+        usb_cdc_update_port_txa(port);
     }
 }
 
@@ -432,11 +448,16 @@ static void usb_cdc_port_start_tx(int port) {
     circ_buf_t *tx_buf = &cdc_state->tx_buf;
     size_t tx_bytes_available = circ_buf_count_to_end(tx_buf->head, tx_buf->tail, USB_CDC_BUF_SIZE);
     int dma_ch_busy = dma_tx_ch->CCR & DMA_CCR_EN;
-    if (!dma_ch_busy && tx_bytes_available) {
-        dma_tx_ch->CMAR = (uint32_t)&tx_buf->data[tx_buf->tail];
-        dma_tx_ch->CNDTR = tx_bytes_available;
-        dma_tx_ch->CCR |= DMA_CCR_EN;
-        cdc_state->last_dma_tx_size = tx_bytes_available;
+    if (!dma_ch_busy) {
+        if (tx_bytes_available) {
+            usb_cdc_set_port_txa(port, 1);
+            dma_tx_ch->CMAR = (uint32_t)&tx_buf->data[tx_buf->tail];
+            dma_tx_ch->CNDTR = tx_bytes_available;
+            dma_tx_ch->CCR |= DMA_CCR_EN;
+            cdc_state->last_dma_tx_size = tx_bytes_available;
+        } else {
+            usb_cdc_set_port_txa(port, 0);
+        }
     }
 }
 
@@ -467,6 +488,7 @@ static void usb_cdc_port_tx_complete(int port) {
     if ((port != USB_CDC_CONFIG_PORT) || !usb_cdc_config_mode) {
         usb_cdc_port_start_tx(port);
     } else {
+        usb_cdc_set_port_txa(port, 0);
         usb_cdc_config_mode_process_tx(port);
     }
 }
@@ -561,6 +583,8 @@ void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin) {
             usb_cdc_update_port_rts(port);
         } else if (pin == cdc_pin_dtr) {
             usb_cdc_update_port_dtr(port);
+        } else if (pin == cdc_pin_txa) {
+            usb_cdc_update_port_txa(port);
         }
     }
 }
@@ -571,6 +595,7 @@ static void usb_cdc_configure_port(int port) {
         gpio_pin_init(&device_config->cdc_config.port_config[port].pins[pin]);
         usb_cdc_update_port_rts(port);
         usb_cdc_update_port_dtr(port);
+        usb_cdc_set_port_txa(port, 0);
     }
 }
 
