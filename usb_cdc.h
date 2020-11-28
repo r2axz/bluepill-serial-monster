@@ -95,6 +95,7 @@ typedef uint16_t usb_cdc_serial_state_t;
 
 #define USB_CDC_SERIAL_STATE_DCD            0x01
 #define USB_CDC_SERIAL_STATE_DSR            0x02
+#define USB_CDC_SERIAL_STATE_RI             0x08
 #define USB_CDC_SERIAL_STATE_PARITY_ERROR   0x20
 #define USB_CDC_SERIAL_STATE_OVERRUN        0x40
 
@@ -176,6 +177,7 @@ typedef enum {
     cdc_pin_dsr,
     cdc_pin_dtr,
     cdc_pin_dcd,
+    cdc_pin_ri,
     cdc_pin_unknown,
     cdc_pin_last = cdc_pin_unknown,
 } __attribute__ ((packed)) cdc_pin_t;

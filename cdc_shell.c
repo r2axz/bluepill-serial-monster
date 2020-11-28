@@ -68,7 +68,7 @@ static const char *cdc_shell_err_cannot_set_pull_for_output         = "Error, ca
 
 
 static const char *_cdc_uart_signal_names[cdc_pin_last] = {
-    "rx", "tx", "rts", "cts", "dsr", "dtr", "dcd", 
+    "rx", "tx", "rts", "cts", "dsr", "dtr", "dcd", "ri", 
 };
 
 static cdc_pin_t _cdc_uart_signal_by_name(char *name) {
@@ -368,7 +368,7 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
         .usage          = "Usage: uart port-number|all show|signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\r\n"
                           "Use \"uart port-number|all show\" to view current UART configuration.\r\n"
                           "Use \"uart port-number|all signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\"\r\n"
-                          "to set UART parameters, where signal names are rx, tx, rts, cts, dsr, dtr, dcd,\r\n"
+                          "to set UART parameters, where signal names are rx, tx, rts, cts, dsr, dtr, dcd, ri,\r\n"
                           "and params are:\r\n"
                           "  output\t[pp|od]\r\n"
                           "  active\t[low|high]\r\n"

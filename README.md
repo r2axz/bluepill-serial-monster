@@ -22,7 +22,7 @@ board works with your computer, don't bother fixing it.
 
 * 3 independent _UART_ ports;
 * Hardware flow control (**RTS**/**CTS**) support<sup>1</sup>;
-* **DSR**/**DTR**/**DCD** signals support;
+* **DSR**/**DTR**/**DCD**/**RI** signals support;
 * 7 or 8 bit word length;
 * None, even, odd parity;
 * 1, 1.5, and 2 stop bits;
@@ -66,14 +66,15 @@ or damage may occur.**
 |   DSR  |      IN       |    **PB7**    |    **PB4**    |    **PB6**    |
 |   DTR  |      OUT      |      PA4      |      PA5      |      PA6      |
 |   DCD  |      IN       |    **PB15**   |    **PB8**    |    **PB9**    |
+|   RI   |      IN       |    **PB3**    |    **PB12**   |    **PA8**    |
 
 Note: **5 V** tolerant input pins are shown **in bold**.
 
 ## Control Signals (Default Configuration)
 
-**RTS**, **CTS**, **DSR**, **DTR**, **DCD** are **active-low** signals.
+**RTS**, **CTS**, **DSR**, **DTR**, **DCD**, **RI** are **active-low** signals.
 
-**DSR**, **DTR**, and **DCD** are connected to the internal _weak pull-up_
+**DSR**, **DTR**, and **DCD**, **RI** are connected to the internal _weak pull-up_
 resistors, so they remain inactive at rest.
 
 **CTS** is **pulled down** internally, which enables _UART TX_ when nothing is
@@ -86,7 +87,7 @@ one half of the buffer space is available, **RTS** remains in the state set
 by the host. Please take this behaviour into account if you rely on the
 **RTS** signal to control non-standard periphery.
 
-**DSR** and **DCD** are polled 50 times per second.
+**DSR**, **DCD**, and **RI** are polled 50 times per second.
 
 _UART DMA RX/TX_ buffer size is **1024** bytes.
 

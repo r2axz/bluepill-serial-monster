@@ -593,7 +593,7 @@ void usb_cdc_reset() {
     NVIC_EnableIRQ(DMA1_Channel7_IRQn);
     /* 
      * Disable JTAG interface (SWD is still enabled),
-     * this frees PA15, PB3, PB4 (needed for DSR inputs).
+     * this frees PA15, PB3, PB4 (needed for DSR/RI inputs).
      */
     RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
     AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
@@ -661,12 +661,15 @@ void usb_cdc_frame() {
             for (int port = 0; port < USB_CDC_NUM_PORTS; port++) {
                 const cdc_port_t *port_config = &device_config_get()->cdc_config.port_config[port];
                 usb_cdc_serial_state_t state = usb_cdc_states[port].serial_state;
-                state &= ~(USB_CDC_SERIAL_STATE_DSR | USB_CDC_SERIAL_STATE_DCD);
+                state &= ~(USB_CDC_SERIAL_STATE_DSR | USB_CDC_SERIAL_STATE_DCD | USB_CDC_SERIAL_STATE_RI);
                 if (gpio_pin_get(&port_config->pins[cdc_pin_dsr])) {
                     state |= USB_CDC_SERIAL_STATE_DSR;
                 }
                 if (gpio_pin_get(&port_config->pins[cdc_pin_dcd])) {
                     state |= USB_CDC_SERIAL_STATE_DCD;
+                }
+                if (gpio_pin_get(&port_config->pins[cdc_pin_ri])) {
+                    state |= USB_CDC_SERIAL_STATE_RI;
                 }
                 usb_cdc_notify_port_state_change(port, state);
             }
