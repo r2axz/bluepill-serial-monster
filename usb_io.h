@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include <stm32f1xx.h>
 #include "circ_buf.h"
+#include "usb.h"
 #include "usb_std.h"
 #include "usb_core.h"
 

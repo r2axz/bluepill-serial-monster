@@ -19,6 +19,6 @@ int main() {
     status_led_init();
     usb_init();
     while (1) {
-        __NOP();
+        usb_poll();
     }
 }

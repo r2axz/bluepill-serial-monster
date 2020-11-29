@@ -63,8 +63,6 @@ void usb_io_init() {
     USB->DADDR = 0;
     USB->ISTR = 0;
     USB->CNTR = USB_CNTR_RESETM;
-    NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn, SYSTEM_INTERRUTPS_PRIORITY_BASE);
-    NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
 }
 
 /* Get Number of RX/TX Bytes Available  */
@@ -211,8 +209,7 @@ static uint8_t usb_transfer_led_timer = 0;
 
 uint16_t istr;
 
-void USB_LP_CAN1_RX0_IRQHandler() {
-    (void)USB_LP_CAN1_RX0_IRQHandler;
+void usb_poll() {
     istr = USB->ISTR;
     if (istr & USB_ISTR_CTR) {
         uint8_t ep_num = USB->ISTR & USB_ISTR_EP_ID;
