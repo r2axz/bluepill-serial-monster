@@ -5,6 +5,7 @@
  */
 
 #include <stm32f1xx.h>
+#include "system_interrupts.h"
 #include "status_led.h"
 #include "usb_descriptors.h"
 #include "usb_core.h"
@@ -62,6 +63,7 @@ void usb_io_init() {
     USB->DADDR = 0;
     USB->ISTR = 0;
     USB->CNTR = USB_CNTR_RESETM;
+    NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn, SYSTEM_INTERRUTPS_PRIORITY_BASE);
     NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
 }
 

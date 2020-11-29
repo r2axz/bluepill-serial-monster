@@ -6,6 +6,7 @@
 
 #include <string.h>
 #include <stm32f1xx.h>
+#include "system_interrupts.h"
 #include "circ_buf.h"
 #include "usb_std.h"
 #include "usb_core.h"
@@ -456,7 +457,9 @@ static void usb_cdc_port_start_tx(int port) {
             dma_tx_ch->CCR |= DMA_CCR_EN;
             cdc_state->last_dma_tx_size = tx_bytes_available;
         } else {
-            usb_cdc_set_port_txa(port, 0);
+            USART_TypeDef *usart = usb_cdc_get_port_usart(port);
+            usart->SR &= ~(USART_SR_TC);
+            usart->CR1 |= USART_CR1_TCIE;
         }
     }
 }
@@ -543,7 +546,10 @@ static void usb_cdc_usart_irq_handler(int port) {
     USART_TypeDef *usart = usb_cdc_get_port_usart(port);
     uint32_t wait_rxne = 0;
     uint32_t status = usart->SR;
-    uint32_t dr;
+    if (status & USART_SR_TC) {
+        usb_cdc_set_port_txa(port, 0);
+        usart->CR1 &= ~(USART_CR1_TCIE);
+    }
     if (status & USART_SR_PE) {
         wait_rxne = 1;
         usb_cdc_notify_port_parity_error(port);
@@ -555,8 +561,7 @@ static void usb_cdc_usart_irq_handler(int port) {
         usb_cdc_port_rx_interrupt(port);
     }
     while (wait_rxne && (usart->SR & USART_SR_RXNE));
-    dr = usart->DR;
-    (void)dr;
+    (void)usart->DR;
 }
 
 void USART1_IRQHandler() {
@@ -610,11 +615,17 @@ void usb_cdc_reconfigure() {
 void usb_cdc_reset() {
     const device_config_t *device_config = device_config_get();
     usb_cdc_enabled = 0;
+    NVIC_SetPriority(DMA1_Channel2_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
     NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+    NVIC_SetPriority(DMA1_Channel3_IRQn, SYSTEM_INTERRUTPS_PRIORITY_BASE);
     NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+    NVIC_SetPriority(DMA1_Channel4_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
     NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+    NVIC_SetPriority(DMA1_Channel5_IRQn, SYSTEM_INTERRUTPS_PRIORITY_BASE);
     NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+    NVIC_SetPriority(DMA1_Channel6_IRQn, SYSTEM_INTERRUTPS_PRIORITY_BASE);
     NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+    NVIC_SetPriority(DMA1_Channel7_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
     NVIC_EnableIRQ(DMA1_Channel7_IRQn);
     /* 
      * Disable JTAG interface (SWD is still enabled),
@@ -655,8 +666,11 @@ void usb_cdc_reset() {
         dma_tx_ch->CCR |= DMA_CCR_MINC | DMA_CCR_DIR | DMA_CCR_TCIE;
         dma_tx_ch->CPAR = (uint32_t)&usart->DR;
     }
+    NVIC_SetPriority(USART1_IRQn, SYSTEM_INTERRUTPS_PRIORITY_CRITICAL);
     NVIC_EnableIRQ(USART1_IRQn);
+    NVIC_SetPriority(USART2_IRQn, SYSTEM_INTERRUTPS_PRIORITY_CRITICAL);
     NVIC_EnableIRQ(USART2_IRQn);
+    NVIC_SetPriority(USART3_IRQn, SYSTEM_INTERRUTPS_PRIORITY_CRITICAL);
     NVIC_EnableIRQ(USART3_IRQn);
 }
 
