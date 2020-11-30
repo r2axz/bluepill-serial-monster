@@ -196,4 +196,8 @@ void usb_cdc_reconfigure();
 #define USB_CDC_CRTL_LINES_POLLING_INTERVAL     20 /* ms */
 #define USB_CDC_CONFIG_PORT                     0
 
+/* CDC Polling */
+
+void usb_cdc_poll();
+
 #endif /* USB_CDC_H */

@@ -10,6 +10,7 @@
 #include "status_led.h"
 #include "device_config.h"
 #include "usb.h"
+#include "usb_cdc.h"
 
 
 int main() {
@@ -20,5 +21,6 @@ int main() {
     usb_init();
     while (1) {
         usb_poll();
+        usb_cdc_poll();
     }
 }

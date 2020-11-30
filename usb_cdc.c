@@ -367,7 +367,6 @@ static void usb_cdc_port_rx_interrupt(int port) {
     usb_cdc_update_port_rts(port);
     if (dma_rx_bytes_available >= current_rx_bytes_available) {
         rx_buf->head = dma_head;
-        usb_cdc_port_send_rx_usb(port);
     } else {
         rx_buf->head = dma_head;
         rx_buf->tail = dma_head;
@@ -438,7 +437,6 @@ void cdc_shell_write(const void *buf, size_t count) {
         count -= bytes_to_copy;
         buf = (uint8_t*)buf + bytes_to_copy;
     }
-    usb_cdc_port_send_rx_usb(USB_CDC_CONFIG_PORT);
 }
 
 /* USB USART TX Functions */
@@ -762,8 +760,6 @@ void usb_cdc_data_endpoint_event_handler(uint8_t ep_num, usb_endpoint_event_t ep
                     usb_cdc_port_start_tx(port);
                 }
             }
-        } else if (ep_event == usb_endpoint_event_data_sent) {
-            usb_cdc_port_send_rx_usb(port);
         }
     }
 }
@@ -810,4 +806,10 @@ usb_status_t usb_cdc_ctrl_process_request(usb_setup_t *setup, void **payload,
         }
     }
     return usb_status_fail;
+}
+
+void usb_cdc_poll() {
+    for (int port = 0; port < (USB_CDC_NUM_PORTS); port++) {
+        usb_cdc_port_send_rx_usb(port);
+    }
 }
