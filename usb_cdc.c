@@ -339,6 +339,7 @@ static void usb_cdc_port_send_rx_usb(int port) {
                 }
             }
             cdc_state->rx_zlp_pending = (usb_circ_buf_send(rx_ep, rx_buf, USB_CDC_BUF_SIZE) == ep_space_available);
+            usb_cdc_update_port_rts(port);
         }
     } else {
         if (cdc_state->rx_zlp_pending) {
@@ -360,12 +361,13 @@ static void usb_cdc_port_start_rx(int port) {
 
 static void usb_cdc_port_rx_interrupt(int port) {
     circ_buf_t *rx_buf = &usb_cdc_states[port].rx_buf;
-    size_t current_rx_bytes_available = circ_buf_count(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE);
+    int rx_buf_tail = rx_buf->tail;
+    size_t current_rx_bytes_available = circ_buf_count(rx_buf->head, rx_buf_tail, USB_CDC_BUF_SIZE);
     DMA_Channel_TypeDef *dma_rx_ch = usb_cdc_get_port_dma_channel(port, usb_cdc_port_direction_rx);
     size_t dma_head = USB_CDC_BUF_SIZE - dma_rx_ch->CNDTR;
-    size_t dma_rx_bytes_available = circ_buf_count(dma_head, rx_buf->tail, USB_CDC_BUF_SIZE);
+    size_t dma_rx_bytes_available = circ_buf_count(dma_head, rx_buf_tail, USB_CDC_BUF_SIZE);
     usb_cdc_update_port_rts(port);
-    if (dma_rx_bytes_available >= current_rx_bytes_available) {
+    if (dma_rx_bytes_available < current_rx_bytes_available) {
         usb_cdc_notify_port_overrun(port);
     }
     rx_buf->head = dma_head;
