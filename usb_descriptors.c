@@ -8,7 +8,7 @@
 #include "usb_cdc.h"
 #include "usb_descriptors.h"
 
-#define USB_CONTROL_ENDPOINT_SIZE           8
+#define USB_CONTROL_ENDPOINT_SIZE           16
 #define USB_CDC_INTERRUPT_ENDPOINT_SIZE     16
 #define USB_CDC_DATA_ENDPOINT_SIZE_SMALL    32
 #define USB_CDC_DATA_ENDPOINT_SIZE_LARGE    64
