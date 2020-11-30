@@ -150,13 +150,14 @@ static int usb_cdc_send_port_state(int port, usb_cdc_serial_state_t state) {
     uint8_t ep_num = usb_cdc_get_port_notification_ep(port);
     uint8_t buf[sizeof(usb_cdc_notification_t) + sizeof(state)];
     usb_cdc_notification_t *notification = (usb_cdc_notification_t*)buf;
-    uint16_t *state_p = (uint16_t*)(buf + sizeof(usb_cdc_notification_t));
+    uint8_t *state_p = buf + sizeof(usb_cdc_notification_t);
     notification->bmRequestType = USB_CDC_NOTIFICATION_REQUEST_TYPE;
     notification->bNotificationType = usb_cdc_notification_serial_state;
     notification->wValue = 0;
     notification->wIndex = usb_cdc_get_port_interface(port);
     notification->wLength = sizeof(state);
-    *state_p = state;
+    *state_p++ = state & 0xFF;
+    *state_p = state >> 8;
     if (usb_space_available(ep_num)) {
         if (usb_send(ep_num, buf, sizeof(buf)) != sizeof(buf)) {
             usb_panic();
@@ -734,10 +735,10 @@ void usb_cdc_data_endpoint_event_handler(uint8_t ep_num, usb_endpoint_event_t ep
 usb_status_t usb_cdc_ctrl_process_request(usb_setup_t *setup, void **payload,
                                           size_t *payload_size, usb_tx_complete_cb_t *tx_callback_ptr) {
     if ((setup->type == usb_setup_type_class) &&
-        (setup->recepient = usb_setup_recepient_interface)) {
+        (setup->recepient == usb_setup_recepient_interface)) {
         int if_num = setup->wIndex;
         int port = usb_cdc_get_interface_port(if_num);
-        if (if_num != -1) {
+        if (port != -1) {
             switch (setup->bRequest) {
             case usb_cdc_request_set_control_line_state:
                 return usb_cdc_set_control_line_state(port, setup->wValue);
@@ -783,8 +784,8 @@ void usb_cdc_poll() {
         usb_cdc_port_send_rx_usb(port);
         if (cdc_state->line_state_change_ready) {
             usb_cdc_set_line_coding(port, &cdc_state->line_coding, 0);
-            cdc_state->line_state_change_ready = 0;
             cdc_state->line_state_change_pending = 0;
+            cdc_state->line_state_change_ready = 0;
         }
         if (cdc_state->usb_rx_pending_ep) {
             size_t tx_space_available = circ_buf_space(tx_buf->head, tx_buf->tail, USB_CDC_BUF_SIZE);
