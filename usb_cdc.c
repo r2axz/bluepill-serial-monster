@@ -585,7 +585,7 @@ static void usb_cdc_configure_port(int port) {
         gpio_pin_init(&device_config->cdc_config.port_config[port].pins[pin]);
         usb_cdc_update_port_rts(port);
         usb_cdc_update_port_dtr(port);
-        usb_cdc_set_port_txa(port, 0);
+        usb_cdc_update_port_txa(port);
     }
 }
 
@@ -798,6 +798,7 @@ void usb_cdc_poll() {
             size_t rx_bytes_available = usb_bytes_available(cdc_state->usb_rx_pending_ep);
             if (tx_space_available >= rx_bytes_available) {
                 usb_circ_buf_read(cdc_state->usb_rx_pending_ep, tx_buf, USB_CDC_BUF_SIZE);
+                usb_cdc_port_start_tx(port);
                 cdc_state->usb_rx_pending_ep = 0;
         }
 
