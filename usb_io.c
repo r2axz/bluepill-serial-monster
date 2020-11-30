@@ -216,14 +216,18 @@ void usb_poll() {
         ep_reg_t *ep_reg = ep_regs(ep_num);
         if (*ep_reg & USB_EP_CTR_TX) {
             *ep_reg = ((*ep_reg & (USB_EP_T_FIELD | USB_EP_KIND | USB_EPADDR_FIELD)) | USB_EP_CTR_RX);
-            usb_endpoints[ep_num].event_handler(ep_num, usb_endpoint_event_data_sent);
+            if (usb_endpoints[ep_num].event_handler) {
+                usb_endpoints[ep_num].event_handler(ep_num, usb_endpoint_event_data_sent);
+            }
         } else {
             usb_endpoint_event_t ep_event = usb_endpoint_event_data_received;
             if (*ep_reg & USB_EP_SETUP) {
                 ep_event = usb_endpoint_event_setup;
             }
             *ep_reg = ((*ep_reg & (USB_EP_T_FIELD | USB_EP_KIND | USB_EPADDR_FIELD)) | USB_EP_CTR_TX);
-            usb_endpoints[ep_num].event_handler(ep_num, ep_event);
+            if (usb_endpoints[ep_num].event_handler) {
+                usb_endpoints[ep_num].event_handler(ep_num, ep_event);
+            }
         }
         usb_transfer_led_timer = USB_TRANSFER_LED_TIME;
         status_led_set(1);
