@@ -314,6 +314,10 @@ static usb_status_t usb_cdc_set_line_coding(int port, const usb_cdc_line_coding_
     } else {
         return usb_status_fail;
     }
+    if (!dry_run) {
+        /* force sending port state, this helps some apps */
+        usb_cdc_states[port].serial_state_prev = ~(usb_cdc_states[port].serial_state_prev & 0);
+    }
     return usb_status_ack;
 }
 
