@@ -47,6 +47,7 @@ typedef struct {
     uint8_t                 rts_active;
     uint8_t                 dtr_active;
     uint8_t                 txa_active;
+    gpio_pin_t              *txa_pin;
 } usb_cdc_state_t;
 
 static usb_cdc_state_t usb_cdc_states[USB_CDC_NUM_PORTS];
@@ -528,11 +529,11 @@ void DMA1_Channel2_IRQHandler() {
 
 /* USART Interrupt Handlers */
 
-__attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * const usart) {
+__attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * usart, gpio_pin_t *txa_pin) {
     uint32_t wait_rxne = 0;
     uint32_t status = usart->SR;
     if (status & USART_SR_TC) {
-        usb_cdc_set_port_txa(port, 0);
+        gpio_pin_set(txa_pin, 0);
         usart->CR1 &= ~(USART_CR1_TCIE);
     }
     if (status & USART_SR_PE) {
@@ -551,17 +552,17 @@ __attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int 
 
 void USART1_IRQHandler() {
     (void)USART1_IRQHandler;
-    usb_cdc_usart_irq_handler(0, usb_cdc_port_usarts[0]);
+    usb_cdc_usart_irq_handler(0, usb_cdc_port_usarts[0], usb_cdc_states[0].txa_pin);
 }
 
 void USART2_IRQHandler() {
     (void)USART2_IRQHandler;
-    usb_cdc_usart_irq_handler(1, usb_cdc_port_usarts[1]);
+    usb_cdc_usart_irq_handler(1, usb_cdc_port_usarts[1], usb_cdc_states[1].txa_pin);
 }
 
 void USART3_IRQHandler() {
     (void)USART3_IRQHandler;
-    usb_cdc_usart_irq_handler(2, usb_cdc_port_usarts[2]);
+    usb_cdc_usart_irq_handler(2, usb_cdc_port_usarts[2], usb_cdc_states[2].txa_pin);
 }
 
 /* Port Configuration & Control Lines Functions */
@@ -650,6 +651,7 @@ void usb_cdc_reset() {
         dma_rx_ch->CNDTR = USB_CDC_BUF_SIZE;
         dma_tx_ch->CCR |= DMA_CCR_MINC | DMA_CCR_DIR | DMA_CCR_TCIE;
         dma_tx_ch->CPAR = (uint32_t)&usart->DR;
+        usb_cdc_states[port].txa_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa];
     }
     NVIC_SetPriority(USART1_IRQn, SYSTEM_INTERRUTPS_PRIORITY_CRITICAL);
     NVIC_EnableIRQ(USART1_IRQn);
