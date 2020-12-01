@@ -53,12 +53,13 @@ static usb_cdc_state_t usb_cdc_states[USB_CDC_NUM_PORTS];
 
 /* Helper Functions */
 
+static USART_TypeDef* const usb_cdc_port_usarts[] = {
+    USART1, USART2, USART3
+};
+
 static USART_TypeDef* usb_cdc_get_port_usart(int port) {
-    static USART_TypeDef* const port_usarts[] = {
-        USART1, USART2, USART3
-    };
-    if (port < (sizeof(port_usarts) / sizeof(*port_usarts))){
-        return port_usarts[port];
+    if (port < (sizeof(usb_cdc_port_usarts) / sizeof(*usb_cdc_port_usarts))){
+        return usb_cdc_port_usarts[port];
     }
     return (USART_TypeDef*)0;
 }
@@ -527,8 +528,7 @@ void DMA1_Channel2_IRQHandler() {
 
 /* USART Interrupt Handlers */
 
-static void usb_cdc_usart_irq_handler(int port) {
-    USART_TypeDef *usart = usb_cdc_get_port_usart(port);
+__attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * const usart) {
     uint32_t wait_rxne = 0;
     uint32_t status = usart->SR;
     if (status & USART_SR_TC) {
@@ -551,17 +551,17 @@ static void usb_cdc_usart_irq_handler(int port) {
 
 void USART1_IRQHandler() {
     (void)USART1_IRQHandler;
-    usb_cdc_usart_irq_handler(0);
+    usb_cdc_usart_irq_handler(0, usb_cdc_port_usarts[0]);
 }
 
 void USART2_IRQHandler() {
     (void)USART2_IRQHandler;
-    usb_cdc_usart_irq_handler(1);
+    usb_cdc_usart_irq_handler(1, usb_cdc_port_usarts[1]);
 }
 
 void USART3_IRQHandler() {
     (void)USART3_IRQHandler;
-    usb_cdc_usart_irq_handler(2);
+    usb_cdc_usart_irq_handler(2, usb_cdc_port_usarts[2]);
 }
 
 /* Port Configuration & Control Lines Functions */
