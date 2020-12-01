@@ -529,7 +529,7 @@ void DMA1_Channel2_IRQHandler() {
 
 /* USART Interrupt Handlers */
 
-__attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * usart, gpio_pin_t *txa_pin) {
+__attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * usart, gpio_pin_t *txa_pin, uint8_t dma_irqn) {
     uint32_t wait_rxne = 0;
     uint32_t status = usart->SR;
     if (status & USART_SR_TC) {
@@ -544,7 +544,7 @@ __attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int 
         usb_cdc_notify_port_overrun(port);
     }
     if (status & USART_SR_IDLE) {
-        usb_cdc_port_rx_interrupt(port);
+        NVIC_SetPendingIRQ(dma_irqn);
     }
     while (wait_rxne && (usart->SR & USART_SR_RXNE));
     (void)usart->DR;
@@ -552,17 +552,17 @@ __attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int 
 
 void USART1_IRQHandler() {
     (void)USART1_IRQHandler;
-    usb_cdc_usart_irq_handler(0, usb_cdc_port_usarts[0], usb_cdc_states[0].txa_pin);
+    usb_cdc_usart_irq_handler(0, usb_cdc_port_usarts[0], usb_cdc_states[0].txa_pin, DMA1_Channel5_IRQn);
 }
 
 void USART2_IRQHandler() {
     (void)USART2_IRQHandler;
-    usb_cdc_usart_irq_handler(1, usb_cdc_port_usarts[1], usb_cdc_states[1].txa_pin);
+    usb_cdc_usart_irq_handler(1, usb_cdc_port_usarts[1], usb_cdc_states[1].txa_pin, DMA1_Channel6_IRQn);
 }
 
 void USART3_IRQHandler() {
     (void)USART3_IRQHandler;
-    usb_cdc_usart_irq_handler(2, usb_cdc_port_usarts[2], usb_cdc_states[2].txa_pin);
+    usb_cdc_usart_irq_handler(2, usb_cdc_port_usarts[2], usb_cdc_states[2].txa_pin, DMA1_Channel3_IRQn);
 }
 
 /* Port Configuration & Control Lines Functions */
