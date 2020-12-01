@@ -800,8 +800,7 @@ void usb_cdc_poll() {
                 usb_circ_buf_read(cdc_state->usb_rx_pending_ep, tx_buf, USB_CDC_BUF_SIZE);
                 usb_cdc_port_start_tx(port);
                 cdc_state->usb_rx_pending_ep = 0;
+            }
         }
-
-    }
     }
 }
