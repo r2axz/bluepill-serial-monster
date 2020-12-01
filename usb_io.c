@@ -128,16 +128,16 @@ size_t usb_circ_buf_read(uint8_t ep_num, circ_buf_t *buf, size_t buf_size) {
     ep_reg_t *ep_reg = ep_regs(ep_num);
     usb_pbuffer_data_t *ep_buf = (usb_pbuffer_data_t *)(USB_PMAADDR + (usb_btable[ep_num].rx_offset<<1));
     pb_word_t ep_bytes_count = usb_btable[ep_num].rx_count & USB_COUNT0_RX_COUNT0_RX;
-    pb_word_t words_left = ep_bytes_count>>1;
+    size_t words_left = ep_bytes_count>>1;
     usb_btable[ep_num].rx_count &= ~USB_COUNT0_RX_COUNT0_RX;
     while(words_left--) {
-        buf->data[buf->head] = ep_buf->data & 0xff;
+        buf->data[buf->head] = (uint8_t)(ep_buf->data);
         buf->head = (buf->head + 1) & (buf_size - 1);
-        buf->data[buf->head] = ((ep_buf++)->data) >> 8;
+        buf->data[buf->head] = (uint8_t)(((ep_buf++)->data) >> 8);
         buf->head = (buf->head + 1) & (buf_size - 1);
     }
     if (ep_bytes_count & 0x1) {
-        buf->data[buf->head] = ep_buf->data & 0xff;
+        buf->data[buf->head] = (uint8_t)(ep_buf->data);
         buf->head = (buf->head + 1) & (buf_size - 1);
     }
     *ep_reg = ((*ep_reg ^ USB_EP_RX_VALID) & (USB_EPREG_MASK | USB_EPRX_STAT)) | (USB_EP_CTR_RX | USB_EP_CTR_TX);
@@ -147,10 +147,10 @@ size_t usb_circ_buf_read(uint8_t ep_num, circ_buf_t *buf, size_t buf_size) {
 /* NOTE: usb_circ_buf_send assumes endpoint is ready to send */
 size_t usb_circ_buf_send(uint8_t ep_num, circ_buf_t *buf, size_t buf_size) {
     ep_reg_t *ep_reg = ep_regs(ep_num);
-    pb_word_t words_left;
     usb_pbuffer_data_t *ep_buf = (usb_pbuffer_data_t *)(USB_PMAADDR + (usb_btable[ep_num].tx_offset<<1));
     size_t count = circ_buf_count(buf->head, buf->tail, buf_size);
     size_t tx_space_available = usb_endpoints[ep_num].tx_size;
+    size_t words_left;
     if (count > tx_space_available) {
         count = tx_space_available;
     }
@@ -158,11 +158,11 @@ size_t usb_circ_buf_send(uint8_t ep_num, circ_buf_t *buf, size_t buf_size) {
     while (words_left--) {
         pb_word_t pb_word = buf->data[buf->tail];
         buf->tail = (buf->tail + 1) & (buf_size - 1);
-        pb_word |= buf->data[buf->tail] << 8;
+        pb_word |= ((uint16_t)buf->data[buf->tail]) << 8;
         buf->tail = (buf->tail + 1) & (buf_size - 1);
         (ep_buf++)->data = pb_word;
     }
-    if (count & 0x01) {
+    if (count & 0x1) {
         (ep_buf)->data = buf->data[buf->tail];
         buf->tail = (buf->tail + 1) & (buf_size - 1);
     }
