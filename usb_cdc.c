@@ -663,8 +663,8 @@ void usb_cdc_enable() {
     usb_cdc_enabled = 1;
     for (int port=0; port<USB_CDC_NUM_PORTS; port++) {
         USART_TypeDef *usart = usb_cdc_get_port_usart(port);
-        usart->CR1 |= USART_CR1_PEIE | USART_CR1_IDLEIE | USART_CR1_RE | USART_CR1_PEIE;
         usb_cdc_port_start_rx(port);
+        usart->CR1 |= USART_CR1_PEIE | USART_CR1_IDLEIE | USART_CR1_RE | USART_CR1_PEIE;
     }
 }
 
