@@ -203,7 +203,7 @@ int usb_endpoint_is_stalled(uint8_t ep_num, usb_endpoint_direction_t ep_directio
     return (*ep_regs(ep_num) & USB_EPRX_STAT) == USB_EP_RX_STALL;
 }
 
-/* USB Interrupt Handling */
+/* USB Polling */
 
 static uint8_t usb_transfer_led_timer = 0;
 
