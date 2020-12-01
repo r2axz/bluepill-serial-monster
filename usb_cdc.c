@@ -311,9 +311,9 @@ static void usb_cdc_port_send_rx_usb(int port) {
     circ_buf_t *rx_buf = &cdc_state->rx_buf;
     uint8_t rx_ep = usb_cdc_get_port_data_ep(port);
     size_t rx_bytes_available = circ_buf_count(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE);
-    if (rx_bytes_available) {
-        size_t ep_space_available = usb_space_available(rx_ep);
-        if (ep_space_available) {
+    size_t ep_space_available = usb_space_available(rx_ep);
+    if (ep_space_available) {
+        if (rx_bytes_available) {
             if (cdc_state->line_coding.bDataBits == usb_cdc_data_bits_7) {
                 size_t bytes_count = ep_space_available < rx_bytes_available ? ep_space_available : rx_bytes_available;
                 uint8_t *buf_ptr = &rx_buf->data[rx_buf->tail];
@@ -322,11 +322,12 @@ static void usb_cdc_port_send_rx_usb(int port) {
                 }
             }
             cdc_state->rx_zlp_pending = (usb_circ_buf_send(rx_ep, rx_buf, USB_CDC_BUF_SIZE) == ep_space_available);
-        }
-    } else {
-        if (cdc_state->rx_zlp_pending) {
-            cdc_state->rx_zlp_pending = 0;
-            usb_send(rx_ep, 0, 0);
+            usb_cdc_update_port_rts(port);
+        } else {
+            if (cdc_state->rx_zlp_pending) {
+                cdc_state->rx_zlp_pending = 0;
+                usb_send(rx_ep, 0, 0);
+            }
         }
     }
 }
