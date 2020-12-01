@@ -354,7 +354,7 @@ static void usb_cdc_port_start_rx(int port) {
     usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
     circ_buf_t *rx_buf = &cdc_state->rx_buf;
     dma_rx_ch->CCR &= ~(DMA_CCR_EN);
-    dma_rx_ch->CMAR = (uint32_t)&rx_buf->data[rx_buf->head];
+    dma_rx_ch->CMAR = (uint32_t)&rx_buf->data;
     dma_rx_ch->CNDTR = USB_CDC_BUF_SIZE;
     dma_rx_ch->CCR |= DMA_CCR_EN;
 }
