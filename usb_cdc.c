@@ -191,13 +191,6 @@ static void usb_cdc_notify_port_overrun(int port) {
     } while (!(__sync_bool_compare_and_swap(&usb_cdc_states[port].serial_state, _state, (_state | USB_CDC_SERIAL_STATE_OVERRUN))));
 }
 
-static void usb_cdc_notify_port_parity_error(int port) {
-    usb_cdc_serial_state_t _state;
-    do {
-        _state = usb_cdc_states[port].serial_state;
-    } while (!(__sync_bool_compare_and_swap(&usb_cdc_states[port].serial_state, _state, (_state | USB_CDC_SERIAL_STATE_PARITY_ERROR))));
-}
-
 /* Line State and Coding */
 
 static void usb_cdc_update_port_dtr(int port) {
@@ -536,12 +529,10 @@ __attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int 
         gpio_pin_set(txa_pin, 0);
         usart->CR1 &= ~(USART_CR1_TCIE);
     }
+    /* Synchronization is not required, no one can interrupt us */
     if (status & USART_SR_PE) {
         wait_rxne = 1;
-        usb_cdc_notify_port_parity_error(port);
-    }
-    if (status & USART_SR_ORE) {
-        usb_cdc_notify_port_overrun(port);
+        usb_cdc_states[port].serial_state |= USB_CDC_SERIAL_STATE_PARITY_ERROR;
     }
     if (status & USART_SR_IDLE) {
         NVIC_SetPendingIRQ(dma_irqn);
