@@ -9,6 +9,5 @@
 
 void status_led_init();
 void status_led_set(int on);
-void status_led_toggle();
 
 #endif /* STATUS_LED */
