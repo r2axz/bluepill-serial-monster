@@ -13,7 +13,7 @@ void system_clock_init() {
     while (!(RCC->CR & RCC_CR_HSERDY))
         ;
     FLASH->ACR |= FLASH_ACR_PRFTBE;
-    FLASH->ACR |= FLASH_ACR_LATENCY_2;
+    FLASH->ACR |= FLASH_ACR_LATENCY_1;
     RCC->CFGR |= RCC_CFGR_HPRE_DIV1;
     RCC->CFGR |= RCC_CFGR_PPRE2_DIV1;
     RCC->CFGR |= RCC_CFGR_PPRE1_DIV2;
