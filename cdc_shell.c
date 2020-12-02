@@ -14,17 +14,17 @@
 #include "cdc_shell.h"
 
 
-static const char *cdc_shell_banner                 = "\r\n\r\n"
+static const char cdc_shell_banner[]                = "\r\n\r\n"
                                                       "*******************************\r\n"
                                                       "* Configuration Shell Started *\r\n"
                                                       "*******************************\r\n\r\n";
-static const char *cdc_shell_prompt                 = ">";
-static const char *cdc_shell_new_line               = "\r\n";
-static const char *cdc_shell_delim                  = "\t- ";
+static const char cdc_shell_prompt[]                = ">";
+static const char cdc_shell_new_line[]              = "\r\n";
+static const char cdc_shell_delim[]                 = "\t- ";
 
-static const char *escape_cursor_forward        = "\033[C";
-static const char *escape_cursor_backward       = "\033[D";
-static const char *escape_clear_line_to_end     = "\033[0K";
+static const char escape_cursor_forward[]       = "\033[C";
+static const char escape_cursor_backward[]      = "\033[D";
+static const char escape_clear_line_to_end[]    = "\033[0K";
 
 typedef void (*cmd_func_t)(int argc, char *argv[]);
 
@@ -36,6 +36,11 @@ typedef struct {
 } cdc_shell_cmd_t;
 
 /* Shell Helper Functions */
+
+__attribute__ ((noinline))
+static void cdc_shell_write_string(const char *buf) {
+    cdc_shell_write(buf, strlen(buf));
+}
 
 static int cdc_shell_invoke_command(int argc, char *argv[], const cdc_shell_cmd_t *commands) {
     const cdc_shell_cmd_t *shell_cmd = commands;
@@ -51,20 +56,20 @@ static int cdc_shell_invoke_command(int argc, char *argv[], const cdc_shell_cmd_
 
 /* Set Commands */
 
-static const char *cdc_shell_err_uart_missing_arguments             = "Error, no arguments, use \"help uart\" for the list of arguments.\r\n";
-static const char *cdc_shell_err_uart_invalid_uart                  = "Error, invalid UART number.\r\n";
-static const char *cdc_shell_err_uart_unknown_signal                = "Error, unknown signal name.\r\n";
-static const char *cdc_shell_err_uart_missing_signame               = "Error, expected \"show\" or a signal name, got nothing.\r\n";
-static const char *cdc_shell_err_uart_missing_params                = "Error, missing signal parameters.\r\n";
-static const char *cdc_shell_err_uart_missing_output_type           = "Error, missing output type.\r\n";
-static const char *cdc_shell_err_uart_invalid_output_type           = "Error, invalid output type.\r\n";
-static const char *cdc_shell_err_uart_missing_polarity              = "Error, missing polarity.\r\n";
-static const char *cdc_shell_err_uart_invalid_polarity              = "Error, invalid polarity.\r\n";
-static const char *cdc_shell_err_uart_missing_pull_type             = "Error, missing pull type.\r\n";
-static const char *cdc_shell_err_uart_invalid_pull_type             = "Error, invalid pull type.\r\n";
-static const char *cdc_shell_err_cannot_set_output_type_for_input   = "Error, cannot set output type for input pin.\r\n";
-static const char *cdc_shell_err_cannot_change_polarity             = "Error, cannot change polarity of alternate function pins.\r\n";
-static const char *cdc_shell_err_cannot_set_pull_for_output         = "Error, cannot pull type for output pin.\r\n";
+static const char cdc_shell_err_uart_missing_arguments[]            = "Error, no arguments, use \"help uart\" for the list of arguments.\r\n";
+static const char cdc_shell_err_uart_invalid_uart[]                 = "Error, invalid UART number.\r\n";
+static const char cdc_shell_err_uart_unknown_signal[]               = "Error, unknown signal name.\r\n";
+static const char cdc_shell_err_uart_missing_signame[]              = "Error, expected \"show\" or a signal name, got nothing.\r\n";
+static const char cdc_shell_err_uart_missing_params[]               = "Error, missing signal parameters.\r\n";
+static const char cdc_shell_err_uart_missing_output_type[]          = "Error, missing output type.\r\n";
+static const char cdc_shell_err_uart_invalid_output_type[]          = "Error, invalid output type.\r\n";
+static const char cdc_shell_err_uart_missing_polarity[]             = "Error, missing polarity.\r\n";
+static const char cdc_shell_err_uart_invalid_polarity[]             = "Error, invalid polarity.\r\n";
+static const char cdc_shell_err_uart_missing_pull_type[]            = "Error, missing pull type.\r\n";
+static const char cdc_shell_err_uart_invalid_pull_type[]            = "Error, invalid pull type.\r\n";
+static const char cdc_shell_err_cannot_set_output_type_for_input[]  = "Error, cannot set output type for input pin.\r\n";
+static const char cdc_shell_err_cannot_change_polarity[]            = "Error, cannot change polarity of alternate function pins.\r\n";
+static const char cdc_shell_err_cannot_set_pull_for_output[]        = "Error, cannot pull type for output pin.\r\n";
 
 
 static const char *_cdc_uart_signal_names[cdc_pin_last] = {
@@ -135,38 +140,38 @@ static void cdc_shell_cmd_uart_show(int port) {
              port_index++) {
         const cdc_port_t *cdc_port = &device_config_get()->cdc_config.port_config[port_index];
         itoa(port_index+1, port_index_str, 10);
-        cdc_shell_write(uart_str, strlen(uart_str));
-        cdc_shell_write(port_index_str, strlen(port_index_str));
-        cdc_shell_write(colon_str, strlen(colon_str));
-        cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+        cdc_shell_write_string(uart_str);
+        cdc_shell_write_string(port_index_str);
+        cdc_shell_write_string(colon_str);
+        cdc_shell_write_string(cdc_shell_new_line);
         for (cdc_pin_t pin = 0; pin < cdc_pin_last; pin++) {
             const gpio_pin_t *cdc_pin = &cdc_port->pins[pin];
             const char *pin_name = _cdc_uart_signal_names[pin];
-            cdc_shell_write(pin_name, strlen(pin_name));
-            cdc_shell_write(cdc_shell_delim, strlen(cdc_shell_delim));
+            cdc_shell_write_string(pin_name);
+            cdc_shell_write_string(cdc_shell_delim);
             if (cdc_pin->port) {
                 const char *active_value = _cdc_uart_polarities[cdc_pin->polarity];
                 if (cdc_pin->dir == gpio_dir_input) {
-                    cdc_shell_write(in_str, strlen(in_str));
+                    cdc_shell_write_string(in_str);
                 } else {
-                    cdc_shell_write(out_str, strlen(output_str));
+                    cdc_shell_write_string(out_str);
                 }
-                cdc_shell_write(active_str, strlen(active_str));
-                cdc_shell_write(active_value, strlen(active_value));
-                cdc_shell_write(comma_str, strlen(comma_str));
+                cdc_shell_write_string(active_str);
+                cdc_shell_write_string(active_value);
+                cdc_shell_write_string(comma_str);
                 if (cdc_pin->dir == gpio_dir_input) {
                     const char *pull_value = _cdc_uart_pull_types[cdc_pin->pull];
-                    cdc_shell_write(pull_str, strlen(pull_str));
-                    cdc_shell_write(pull_value, strlen(pull_value));
+                    cdc_shell_write_string(pull_str);
+                    cdc_shell_write_string(pull_value);
                 } else {
                     const char *output_value = _cdc_uart_output_types[cdc_pin->output];
-                    cdc_shell_write(output_str, strlen(output_str));
-                    cdc_shell_write(output_value, strlen(output_value));
+                    cdc_shell_write_string(output_str);
+                    cdc_shell_write_string(output_value);
                 }
             } else {
-                cdc_shell_write(na_str, strlen(na_str));
+                cdc_shell_write_string(na_str);
             }
-            cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+            cdc_shell_write_string(cdc_shell_new_line);
         }
     }
 }
@@ -180,7 +185,7 @@ static int cdc_shell_cmd_uart_set_output_type(int port, cdc_pin_t uart_pin, gpio
             pin->output = output;
             usb_cdc_reconfigure_port_pin(port, uart_pin);
         } else {
-            cdc_shell_write(cdc_shell_err_cannot_set_output_type_for_input, strlen(cdc_shell_err_cannot_set_output_type_for_input));
+            cdc_shell_write_string(cdc_shell_err_cannot_set_output_type_for_input);
             return -1;
         }
     }
@@ -196,7 +201,7 @@ static int cdc_shell_cmd_uart_set_polarity(int port, cdc_pin_t uart_pin, gpio_po
             pin->polarity = polarity;
             usb_cdc_reconfigure_port_pin(port, uart_pin);
         } else {
-            cdc_shell_write(cdc_shell_err_cannot_change_polarity, strlen(cdc_shell_err_cannot_change_polarity));
+            cdc_shell_write_string(cdc_shell_err_cannot_change_polarity);
             return -1;
         }
     }
@@ -212,7 +217,7 @@ static int cdc_shell_cmd_uart_set_pull_type(int port, cdc_pin_t uart_pin, gpio_p
             pin->pull = pull;
             usb_cdc_reconfigure_port_pin(port, uart_pin);
         } else {
-            cdc_shell_write(cdc_shell_err_cannot_set_pull_for_output, strlen(cdc_shell_err_cannot_set_pull_for_output));
+            cdc_shell_write_string(cdc_shell_err_cannot_set_pull_for_output);
             return -1;
         }
     }
@@ -226,7 +231,7 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
             port = -1;
         } else {
             if (((port = atoi(*argv)) < 1) || port > USB_CDC_NUM_PORTS) {
-                cdc_shell_write(cdc_shell_err_uart_invalid_uart, strlen(cdc_shell_err_uart_invalid_uart));
+                cdc_shell_write_string(cdc_shell_err_uart_invalid_uart);
                 return;
             }
             port = port - 1;
@@ -240,7 +245,7 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                     argc--;
                     cdc_pin_t uart_pin = _cdc_uart_signal_by_name(*argv);
                     if (uart_pin == cdc_pin_unknown) {
-                        cdc_shell_write(cdc_shell_err_uart_unknown_signal, strlen(cdc_shell_err_uart_unknown_signal));
+                        cdc_shell_write_string(cdc_shell_err_uart_unknown_signal);
                         return;
                     }
                     argv++;
@@ -258,11 +263,11 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                             return;
                                         }
                                     } else {
-                                        cdc_shell_write(cdc_shell_err_uart_invalid_output_type, strlen(cdc_shell_err_uart_invalid_output_type));
+                                        cdc_shell_write_string(cdc_shell_err_uart_invalid_output_type);
                                         return;
                                     }
                                 } else {
-                                    cdc_shell_write(cdc_shell_err_uart_missing_output_type, strlen(cdc_shell_err_uart_missing_output_type));
+                                    cdc_shell_write_string(cdc_shell_err_uart_missing_output_type);
                                     return;
                                 }
                             } else if (strcmp(*argv, "active") == 0) {
@@ -277,11 +282,11 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                             return;
                                         }
                                     } else {
-                                        cdc_shell_write(cdc_shell_err_uart_invalid_polarity, strlen(cdc_shell_err_uart_invalid_polarity));
+                                        cdc_shell_write_string(cdc_shell_err_uart_invalid_polarity);
                                         return;
                                     }
                                 } else {
-                                    cdc_shell_write(cdc_shell_err_uart_missing_polarity, strlen(cdc_shell_err_uart_missing_polarity));
+                                    cdc_shell_write_string(cdc_shell_err_uart_missing_polarity);
                                     return;
                                 }
                             } else if (strcmp(*argv, "pull") == 0) {
@@ -296,11 +301,11 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                             return;
                                         }
                                     } else {
-                                        cdc_shell_write(cdc_shell_err_uart_invalid_pull_type, strlen(cdc_shell_err_uart_invalid_pull_type));
+                                        cdc_shell_write_string(cdc_shell_err_uart_invalid_pull_type);
                                         return;
                                     }
                                 } else {
-                                    cdc_shell_write(cdc_shell_err_uart_missing_pull_type, strlen(cdc_shell_err_uart_missing_pull_type));
+                                    cdc_shell_write_string(cdc_shell_err_uart_missing_pull_type);
                                     return;
                                 }
                             } else {
@@ -308,20 +313,20 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                             }
                         }
                     } else {
-                        cdc_shell_write(cdc_shell_err_uart_missing_params, strlen(cdc_shell_err_uart_missing_params));            
+                        cdc_shell_write_string(cdc_shell_err_uart_missing_params);
                     }
                 }
             }
         } else {
-            cdc_shell_write(cdc_shell_err_uart_missing_signame, strlen(cdc_shell_err_uart_missing_signame));
+            cdc_shell_write_string(cdc_shell_err_uart_missing_signame);
         }
     } else {
-        cdc_shell_write(cdc_shell_err_uart_missing_arguments, strlen(cdc_shell_err_uart_missing_arguments));
+        cdc_shell_write_string(cdc_shell_err_uart_missing_arguments);
     } 
 }
 
 
-static const char *cdc_shell_err_config_missing_arguments = "Error, invalid or missing arguments, use \"help config\" for the list of arguments.\r\n";
+static const char cdc_shell_err_config_missing_arguments[] = "Error, invalid or missing arguments, use \"help config\" for the list of arguments.\r\n";
 
 static void cdc_shell_cmd_config_save() {
     device_config_save();
@@ -341,7 +346,7 @@ static void cdc_shell_cmd_config(int argc, char *argv[]) {
             return cdc_shell_cmd_config_reset();
         }
     }
-    cdc_shell_write(cdc_shell_err_config_missing_arguments, strlen(cdc_shell_err_config_missing_arguments));
+    cdc_shell_write_string(cdc_shell_err_config_missing_arguments);
 }
 
 static void cdc_shell_cmd_help(int argc, char *argv[]);
@@ -381,7 +386,7 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
 
 /* Global Commands */
 
-static const char *cdc_shell_err_no_help = "Error, no help for this command, use \"help\" to get the list of available commands.\r\n";
+static const char cdc_shell_err_no_help[] = "Error, no help for this command, use \"help\" to get the list of available commands.\r\n";
 
 static void cdc_shell_cmd_help(int argc, char *argv[]) {
     const cdc_shell_cmd_t *cmd = cdc_shell_commands;
@@ -389,37 +394,37 @@ static void cdc_shell_cmd_help(int argc, char *argv[]) {
         if (argc) {
             if (strcmp(*argv, cmd->cmd) == 0) {
                 const char *delim = ": ";
-                cdc_shell_write(cmd->cmd, strlen(cmd->cmd));
-                cdc_shell_write(delim, strlen(delim));
-                cdc_shell_write(cmd->description, strlen(cmd->description));
-                cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
-                cdc_shell_write(cmd->usage, strlen(cmd->usage));
-                cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+                cdc_shell_write_string(cmd->cmd);
+                cdc_shell_write_string(delim);
+                cdc_shell_write_string(cmd->description);
+                cdc_shell_write_string(cdc_shell_new_line);
+                cdc_shell_write_string(cmd->usage);
+                cdc_shell_write_string(cdc_shell_new_line);
                 break;
             }
         } else {
-            cdc_shell_write(cmd->cmd, strlen(cmd->cmd));
-            cdc_shell_write(cdc_shell_delim, strlen(cdc_shell_delim));
-            cdc_shell_write(cmd->description, strlen(cmd->description));
-            cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+            cdc_shell_write_string(cmd->cmd);
+            cdc_shell_write_string(cdc_shell_delim);
+            cdc_shell_write_string(cmd->description);
+            cdc_shell_write_string(cdc_shell_new_line);
         }
         cmd++;
     }
     if (argc && (cmd->cmd == 0)) {
-        cdc_shell_write(cdc_shell_err_no_help, strlen(cdc_shell_err_no_help));
+        cdc_shell_write_string(cdc_shell_err_no_help);
     }
 }
 
-static const char *cdc_shell_err_unknown_command = "Error, unknown command, use \"help\" to get the list of available commands.\r\n";
+static const char cdc_shell_err_unknown_command[] = "Error, unknown command, use \"help\" to get the list of available commands.\r\n";
 
 static void cdc_shell_exec_command(int argc, char *argv[]) {
     if (cdc_shell_invoke_command(argc, argv, cdc_shell_commands) == -1) {
-        cdc_shell_write(cdc_shell_err_unknown_command, strlen(cdc_shell_err_unknown_command));
+        cdc_shell_write_string(cdc_shell_err_unknown_command);
     }
 }
 
-static const char *cdc_shell_err_too_long       = "Error, command line is too long.\r\n";
-static const char *cdc_shell_err_too_many_args  = "Error, too many command line arguments.\r\n";
+static const char cdc_shell_err_too_long[]      = "Error, command line is too long.\r\n";
+static const char cdc_shell_err_too_many_args[] = "Error, too many command line arguments.\r\n";
 
 static void cdc_shell_parse_command_line(char *cmd_line) {
     int argc = 0;
@@ -442,7 +447,7 @@ static void cdc_shell_parse_command_line(char *cmd_line) {
             }
             argc++;
         } else {
-            cdc_shell_write(cdc_shell_err_too_many_args, strlen(cdc_shell_err_too_many_args));
+            cdc_shell_write_string(cdc_shell_err_too_many_args);
             return;
         }
     }
@@ -471,8 +476,8 @@ void cdc_shell_init() {
     cdc_shell_clear_cmd_buf();
     memset(cmd_prev_line_buf, 0, sizeof(cmd_prev_line_buf));
     cdc_shell_state = cdc_shell_idle;
-    cdc_shell_write(cdc_shell_banner, strlen(cdc_shell_banner));
-    cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
+    cdc_shell_write_string(cdc_shell_banner);
+    cdc_shell_write_string(cdc_shell_prompt);
 }
 
 #define ASCII_BACKSPACE_CHAR        0x08
@@ -489,19 +494,19 @@ static void cdc_shell_cursor_move_back(int n_symb) {
     if (n_symb) {
         char n_symb_str[32];
         itoa(n_symb, n_symb_str, 10);
-        cdc_shell_write("\033[", 2);
-        cdc_shell_write(n_symb_str, strlen(n_symb_str));
-        cdc_shell_write("D", 1);
+        cdc_shell_write_string("\033[");
+        cdc_shell_write_string(n_symb_str);
+        cdc_shell_write_string("D");
     }
 }
 
 static void cdc_shell_handle_backspace() {
     if (cmd_line_cursor > cmd_line_buf) {
         cdc_shell_cursor_move_back(cmd_line_cursor - cmd_line_buf);
-        cdc_shell_write(escape_clear_line_to_end, strlen(escape_clear_line_to_end));
+        cdc_shell_write_string(escape_clear_line_to_end);
         cmd_line_cursor--;
         memmove(cmd_line_cursor, cmd_line_cursor+1, strlen(cmd_line_cursor));
-        cdc_shell_write(cmd_line_buf, strlen(cmd_line_buf));
+        cdc_shell_write_string(cmd_line_buf);
         cdc_shell_cursor_move_back(strlen(cmd_line_buf) - (cmd_line_cursor - cmd_line_buf));
     }
 }
@@ -509,7 +514,7 @@ static void cdc_shell_handle_backspace() {
 static void cdc_shell_insert_symbol(char c) {
     memmove(cmd_line_cursor+1, cmd_line_cursor, strlen(cmd_line_cursor)+1);
     *cmd_line_cursor = c;
-    cdc_shell_write(cmd_line_cursor, strlen(cmd_line_cursor));
+    cdc_shell_write_string(cmd_line_cursor);
     cmd_line_cursor++;
     cdc_shell_cursor_move_back(strlen(cmd_line_buf) - (cmd_line_cursor - cmd_line_buf));
 }
@@ -526,21 +531,21 @@ void cdc_shell_process_input(const void *buf, size_t count) {
                 if (*buf_p == ANSI_CTRLSEQ_CUF) {
                     if (*cmd_line_cursor) {
                         cmd_line_cursor++;
-                        cdc_shell_write(escape_cursor_forward, strlen(escape_cursor_forward));
+                        cdc_shell_write_string(escape_cursor_forward);
                     }
                 } else if (*buf_p == ANSI_CTRLSEQ_CUB) {
                     if (cmd_line_cursor > cmd_line_buf) {
                         cmd_line_cursor--;
-                        cdc_shell_write(escape_cursor_backward, strlen(escape_cursor_backward));
+                        cdc_shell_write_string(escape_cursor_backward);
                     }
                 } else if (*buf_p == ANSI_CTRLSEQ_CUU) {
                     size_t prev_cmd_len = strlen(cmd_prev_line_buf);
                     if (prev_cmd_len) {
                         strcpy(cmd_line_buf, cmd_prev_line_buf);
                         cdc_shell_cursor_move_back(cmd_line_cursor - cmd_line_buf);
-                        cdc_shell_write(escape_clear_line_to_end, strlen(escape_clear_line_to_end));
+                        cdc_shell_write_string(escape_clear_line_to_end);
                         cmd_line_cursor = cmd_line_buf + prev_cmd_len;
-                        cdc_shell_write(cmd_line_buf, prev_cmd_len);
+                        cdc_shell_write_string(cmd_line_buf);
                     }
                 }
                 cdc_shell_state = cdc_shell_idle;
@@ -559,13 +564,13 @@ void cdc_shell_process_input(const void *buf, size_t count) {
         case cdc_shell_idle:
             if (*buf_p == '\r' || *buf_p == '\n') {
                 cdc_shell_state = cdc_shell_expects_lf;
-                cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
+                cdc_shell_write_string(cdc_shell_new_line);
                 if (cmd_line_cursor != cmd_line_buf) {
                     strcpy(cmd_prev_line_buf, cmd_line_buf);
                 }
                 cdc_shell_parse_command_line(cmd_line_buf);
                 cdc_shell_clear_cmd_buf();
-                cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
+                cdc_shell_write_string(cdc_shell_prompt);
             } else if (*buf_p == ANSI_CTRLSEQ_ESCAPE_CHAR) {
                 cdc_shell_state = cdc_shell_expects_csi;
             } else if (*buf_p == ASCII_BACKSPACE_CHAR || *buf_p == ASCII_DELETE_CHAR) {
@@ -574,9 +579,9 @@ void cdc_shell_process_input(const void *buf, size_t count) {
                 cdc_shell_insert_symbol(*buf_p);
                 if ((cmd_line_cursor - cmd_line_buf) >= sizeof(cmd_line_buf)/sizeof(*cmd_line_buf)) {
                     cdc_shell_clear_cmd_buf();
-                    cdc_shell_write(cdc_shell_new_line, strlen(cdc_shell_new_line));
-                    cdc_shell_write(cdc_shell_err_too_long, strlen(cdc_shell_err_too_long));
-                    cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
+                    cdc_shell_write_string(cdc_shell_new_line);
+                    cdc_shell_write_string(cdc_shell_err_too_long);
+                    cdc_shell_write_string(cdc_shell_prompt);
                 }
             }
         }
