@@ -214,7 +214,7 @@ static void usb_cdc_update_port_rts(int port) {
         const gpio_pin_t *rts_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_rts];
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
         circ_buf_t *rx_buf = &cdc_state->rx_buf;
-        int rts_active = (circ_buf_space(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE) > (USB_CDC_BUF_SIZE>>1)) && cdc_state->rts_active;
+        int rts_active = ((circ_buf_space(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE) > (USB_CDC_BUF_SIZE>>1))) && cdc_state->rts_active;
         gpio_pin_set(rts_pin, rts_active);
     }
 }
