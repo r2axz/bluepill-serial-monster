@@ -70,4 +70,6 @@ void gpio_pin_init(const gpio_pin_t *pin);
 void gpio_pin_set(const gpio_pin_t *pin, int is_active);
 int  gpio_pin_get(const gpio_pin_t *pin);
 
+volatile uint32_t *gpio_pin_get_bitband_clear_addr(const gpio_pin_t *pin);
+
 #endif /* GPIO_G */

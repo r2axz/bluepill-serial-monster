@@ -62,3 +62,16 @@ int gpio_pin_get(const gpio_pin_t *pin) {
     }
     return 0;
 }
+
+volatile uint32_t *gpio_pin_get_bitband_clear_addr(const gpio_pin_t *pin) {
+    volatile uint32_t result = 0;
+    if (pin->port) {
+        result = PERIPH_BB_BASE;
+        result += ((uint32_t)(&pin->port->BSRR) - PERIPH_BASE) << 5;
+        result += pin->pin << 2;
+        if (pin->polarity == gpio_polarity_high) {
+            result += GPIO_BSRR_BR0_Pos << 2;
+        }
+    }
+    return (volatile uint32_t*)result;
+}
