@@ -178,6 +178,7 @@ typedef enum {
     cdc_pin_dtr,
     cdc_pin_dcd,
     cdc_pin_ri,
+    cdc_pin_txa,
     cdc_pin_unknown,
     cdc_pin_last = cdc_pin_unknown,
 } __attribute__ ((packed)) cdc_pin_t;
@@ -194,5 +195,9 @@ void usb_cdc_reconfigure();
 #define USB_CDC_BUF_SIZE                        0x400
 #define USB_CDC_CRTL_LINES_POLLING_INTERVAL     20 /* ms */
 #define USB_CDC_CONFIG_PORT                     0
+
+/* CDC Polling */
+
+void usb_cdc_poll();
 
 #endif /* USB_CDC_H */

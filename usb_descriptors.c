@@ -8,7 +8,7 @@
 #include "usb_cdc.h"
 #include "usb_descriptors.h"
 
-#define USB_CONTROL_ENDPOINT_SIZE           8
+#define USB_CONTROL_ENDPOINT_SIZE           16
 #define USB_CDC_INTERRUPT_ENDPOINT_SIZE     16
 #define USB_CDC_DATA_ENDPOINT_SIZE_SMALL    32
 #define USB_CDC_DATA_ENDPOINT_SIZE_LARGE    64
@@ -28,7 +28,7 @@ const usb_endpoint_t usb_endpoints[usb_endpoint_address_last] = {
         .type       = usb_endpoint_type_interrupt,
         .rx_size    = 0,
         .tx_size    = USB_CDC_INTERRUPT_ENDPOINT_SIZE,
-        .event_handler = usb_cdc_interrupt_endpoint_event_handler,
+        .event_handler = 0,
     },
      /*  CDC 0 Data Endpoint */
     { 
@@ -42,7 +42,7 @@ const usb_endpoint_t usb_endpoints[usb_endpoint_address_last] = {
         .type       = usb_endpoint_type_interrupt,
         .rx_size    = 0,
         .tx_size    = USB_CDC_INTERRUPT_ENDPOINT_SIZE,
-        .event_handler = usb_cdc_interrupt_endpoint_event_handler,
+        .event_handler = 0,
     },
      /*  CDC 1 Data Endpoint */
     { 
@@ -56,7 +56,7 @@ const usb_endpoint_t usb_endpoints[usb_endpoint_address_last] = {
         .type       = usb_endpoint_type_interrupt,
         .rx_size    = 0,
         .tx_size    = USB_CDC_INTERRUPT_ENDPOINT_SIZE,
-        .event_handler = usb_cdc_interrupt_endpoint_event_handler,
+        .event_handler = 0,
     },
      /*  CDC 2 Data Endpoint */
     { 

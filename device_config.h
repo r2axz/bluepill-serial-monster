@@ -13,6 +13,7 @@
 
 typedef struct {
     uint32_t        magic;
+    gpio_pin_t      status_led_pin;
     gpio_pin_t      config_pin;
     cdc_config_t    cdc_config;
     uint32_t        crc; /* should be the last member of the struct */

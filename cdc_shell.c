@@ -68,7 +68,7 @@ static const char *cdc_shell_err_cannot_set_pull_for_output         = "Error, ca
 
 
 static const char *_cdc_uart_signal_names[cdc_pin_last] = {
-    "rx", "tx", "rts", "cts", "dsr", "dtr", "dcd", "ri", 
+    "rx", "tx", "rts", "cts", "dsr", "dtr", "dcd", "ri", "txa",
 };
 
 static cdc_pin_t _cdc_uart_signal_by_name(char *name) {
@@ -368,7 +368,7 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
         .usage          = "Usage: uart port-number|all show|signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\r\n"
                           "Use \"uart port-number|all show\" to view current UART configuration.\r\n"
                           "Use \"uart port-number|all signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\"\r\n"
-                          "to set UART parameters, where signal names are rx, tx, rts, cts, dsr, dtr, dcd, ri,\r\n"
+                          "to set UART parameters, where signal names are rx, tx, rts, cts, dsr, dtr, dcd, ri, txa,\r\n"
                           "and params are:\r\n"
                           "  output\t[pp|od]\r\n"
                           "  active\t[low|high]\r\n"
@@ -425,19 +425,19 @@ static void cdc_shell_parse_command_line(char *cmd_line) {
     int argc = 0;
     char *argv[USB_SHELL_MAC_CMD_ARGS];
     char *cmd_line_p = cmd_line;
-    while (isspace((int)(*cmd_line_p))) {
+    while (isspace(*(unsigned char *)cmd_line_p)) {
         cmd_line_p++;
     }
     while (*cmd_line_p) {
         if (argc < USB_SHELL_MAC_CMD_ARGS) {
             argv[argc] = cmd_line_p;
-            while (*cmd_line_p && !isspace((int)(*cmd_line_p))) {
+            while (*cmd_line_p && !isspace(*(unsigned char *)cmd_line_p)) {
                 cmd_line_p++;
             }
             if (*cmd_line_p) {
                 *cmd_line_p++ = '\0';
             }
-            while (isspace((int)(*cmd_line_p))) {
+            while (isspace(*(unsigned char *)cmd_line_p)) {
                 cmd_line_p++;
             }
             argc++;
@@ -475,6 +475,8 @@ void cdc_shell_init() {
     cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
 }
 
+#define ASCII_BACKSPACE_CHAR        0x08
+#define ASCII_DELETE_CHAR           0x7f
 #define ANSI_CTRLSEQ_ESCAPE_CHAR    0x1B
 #define ANSI_CTRLSEQ_ESCAPE_CSI     0x5B
 #define ANSI_CTRLSEQ_CUU            0x41
@@ -517,7 +519,7 @@ void cdc_shell_process_input(const void *buf, size_t count) {
     while (count--) {
         switch (cdc_shell_state) {
         case cdc_shell_expects_csn:
-            if (isdigit((int)*buf_p)) {
+            if (isdigit(*(unsigned char*)buf_p)) {
                 /* Ignore values for simplicity */
                 break;
             } else {
@@ -566,9 +568,9 @@ void cdc_shell_process_input(const void *buf, size_t count) {
                 cdc_shell_write(cdc_shell_prompt, strlen(cdc_shell_prompt));
             } else if (*buf_p == ANSI_CTRLSEQ_ESCAPE_CHAR) {
                 cdc_shell_state = cdc_shell_expects_csi;
-            } else if (*buf_p == '\b' || *buf_p == '\177') {
+            } else if (*buf_p == ASCII_BACKSPACE_CHAR || *buf_p == ASCII_DELETE_CHAR) {
                 cdc_shell_handle_backspace();
-            } else if (isprint((int)(*buf_p))) {
+            } else if (isprint(*(unsigned char *)(buf_p))) {
                 cdc_shell_insert_symbol(*buf_p);
                 if ((cmd_line_cursor - cmd_line_buf) >= sizeof(cmd_line_buf)/sizeof(*cmd_line_buf)) {
                     cdc_shell_clear_cmd_buf();

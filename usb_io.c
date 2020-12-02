@@ -5,6 +5,7 @@
  */
 
 #include <stm32f1xx.h>
+#include "system_interrupts.h"
 #include "status_led.h"
 #include "usb_descriptors.h"
 #include "usb_core.h"
@@ -62,7 +63,6 @@ void usb_io_init() {
     USB->DADDR = 0;
     USB->ISTR = 0;
     USB->CNTR = USB_CNTR_RESETM;
-    NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
 }
 
 /* Get Number of RX/TX Bytes Available  */
@@ -128,16 +128,16 @@ size_t usb_circ_buf_read(uint8_t ep_num, circ_buf_t *buf, size_t buf_size) {
     ep_reg_t *ep_reg = ep_regs(ep_num);
     usb_pbuffer_data_t *ep_buf = (usb_pbuffer_data_t *)(USB_PMAADDR + (usb_btable[ep_num].rx_offset<<1));
     pb_word_t ep_bytes_count = usb_btable[ep_num].rx_count & USB_COUNT0_RX_COUNT0_RX;
-    pb_word_t words_left = ep_bytes_count>>1;
+    size_t words_left = ep_bytes_count>>1;
     usb_btable[ep_num].rx_count &= ~USB_COUNT0_RX_COUNT0_RX;
     while(words_left--) {
-        buf->data[buf->head] = ep_buf->data & 0xff;
+        buf->data[buf->head] = (uint8_t)(ep_buf->data);
         buf->head = (buf->head + 1) & (buf_size - 1);
-        buf->data[buf->head] = ((ep_buf++)->data) >> 8;
+        buf->data[buf->head] = (uint8_t)(((ep_buf++)->data) >> 8);
         buf->head = (buf->head + 1) & (buf_size - 1);
     }
     if (ep_bytes_count & 0x1) {
-        buf->data[buf->head] = ep_buf->data & 0xff;
+        buf->data[buf->head] = (uint8_t)(ep_buf->data);
         buf->head = (buf->head + 1) & (buf_size - 1);
     }
     *ep_reg = ((*ep_reg ^ USB_EP_RX_VALID) & (USB_EPREG_MASK | USB_EPRX_STAT)) | (USB_EP_CTR_RX | USB_EP_CTR_TX);
@@ -147,10 +147,10 @@ size_t usb_circ_buf_read(uint8_t ep_num, circ_buf_t *buf, size_t buf_size) {
 /* NOTE: usb_circ_buf_send assumes endpoint is ready to send */
 size_t usb_circ_buf_send(uint8_t ep_num, circ_buf_t *buf, size_t buf_size) {
     ep_reg_t *ep_reg = ep_regs(ep_num);
-    pb_word_t words_left;
     usb_pbuffer_data_t *ep_buf = (usb_pbuffer_data_t *)(USB_PMAADDR + (usb_btable[ep_num].tx_offset<<1));
     size_t count = circ_buf_count(buf->head, buf->tail, buf_size);
     size_t tx_space_available = usb_endpoints[ep_num].tx_size;
+    size_t words_left;
     if (count > tx_space_available) {
         count = tx_space_available;
     }
@@ -158,11 +158,11 @@ size_t usb_circ_buf_send(uint8_t ep_num, circ_buf_t *buf, size_t buf_size) {
     while (words_left--) {
         pb_word_t pb_word = buf->data[buf->tail];
         buf->tail = (buf->tail + 1) & (buf_size - 1);
-        pb_word |= buf->data[buf->tail] << 8;
+        pb_word |= ((uint16_t)buf->data[buf->tail]) << 8;
         buf->tail = (buf->tail + 1) & (buf_size - 1);
         (ep_buf++)->data = pb_word;
     }
-    if (count & 0x01) {
+    if (count & 0x1) {
         (ep_buf)->data = buf->data[buf->tail];
         buf->tail = (buf->tail + 1) & (buf_size - 1);
     }
@@ -203,28 +203,31 @@ int usb_endpoint_is_stalled(uint8_t ep_num, usb_endpoint_direction_t ep_directio
     return (*ep_regs(ep_num) & USB_EPRX_STAT) == USB_EP_RX_STALL;
 }
 
-/* USB Interrupt Handling */
+/* USB Polling */
 
 static uint8_t usb_transfer_led_timer = 0;
 
 uint16_t istr;
 
-void USB_LP_CAN1_RX0_IRQHandler() {
-    (void)USB_LP_CAN1_RX0_IRQHandler;
+void usb_poll() {
     istr = USB->ISTR;
     if (istr & USB_ISTR_CTR) {
         uint8_t ep_num = USB->ISTR & USB_ISTR_EP_ID;
         ep_reg_t *ep_reg = ep_regs(ep_num);
         if (*ep_reg & USB_EP_CTR_TX) {
             *ep_reg = ((*ep_reg & (USB_EP_T_FIELD | USB_EP_KIND | USB_EPADDR_FIELD)) | USB_EP_CTR_RX);
-            usb_endpoints[ep_num].event_handler(ep_num, usb_endpoint_event_data_sent);
+            if (usb_endpoints[ep_num].event_handler) {
+                usb_endpoints[ep_num].event_handler(ep_num, usb_endpoint_event_data_sent);
+            }
         } else {
             usb_endpoint_event_t ep_event = usb_endpoint_event_data_received;
             if (*ep_reg & USB_EP_SETUP) {
                 ep_event = usb_endpoint_event_setup;
             }
             *ep_reg = ((*ep_reg & (USB_EP_T_FIELD | USB_EP_KIND | USB_EPADDR_FIELD)) | USB_EP_CTR_TX);
-            usb_endpoints[ep_num].event_handler(ep_num, ep_event);
+            if (usb_endpoints[ep_num].event_handler) {
+                usb_endpoints[ep_num].event_handler(ep_num, ep_event);
+            }
         }
         usb_transfer_led_timer = USB_TRANSFER_LED_TIME;
         status_led_set(1);
