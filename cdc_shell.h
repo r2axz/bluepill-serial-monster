@@ -13,6 +13,7 @@
 #define USB_SHELL_MAC_CMD_ARGS          0x10
 
 extern void cdc_shell_write(const void *buf, size_t count);
+extern void cdc_shell_write_string(const char *buf);
 
 void cdc_shell_init();
 void cdc_shell_process_input(const void *buf, size_t count);

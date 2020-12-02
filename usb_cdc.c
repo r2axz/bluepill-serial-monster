@@ -433,6 +433,10 @@ void cdc_shell_write(const void *buf, size_t count) {
     }
 }
 
+void cdc_shell_write_string(const char *buf) {
+    cdc_shell_write(buf, strlen(buf));
+}
+
 /* USB USART TX Functions */
 
 static void usb_cdc_port_start_tx(int port) {
