@@ -47,7 +47,7 @@ typedef struct {
     uint8_t                 rts_active;
     uint8_t                 dtr_active;
     uint8_t                 txa_active;
-    gpio_pin_t              *txa_pin;
+    volatile uint32_t       *txa_bitband_clear;
 } usb_cdc_state_t;
 
 static usb_cdc_state_t usb_cdc_states[USB_CDC_NUM_PORTS];
@@ -522,11 +522,12 @@ void DMA1_Channel2_IRQHandler() {
 
 /* USART Interrupt Handlers */
 
-__attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * usart, gpio_pin_t *txa_pin, uint8_t dma_irqn) {
+__attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * usart,
+    volatile uint32_t *txa_bitband_clear, uint8_t dma_irqn) {
     uint32_t wait_rxne = 0;
     uint32_t status = usart->SR;
     if (status & USART_SR_TC) {
-        gpio_pin_set(txa_pin, 0);
+        *txa_bitband_clear = 1;
         usart->CR1 &= ~(USART_CR1_TCIE);
     }
     /* Synchronization is not required, no one can interrupt us */
@@ -543,17 +544,17 @@ __attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int 
 
 void USART1_IRQHandler() {
     (void)USART1_IRQHandler;
-    usb_cdc_usart_irq_handler(0, usb_cdc_port_usarts[0], usb_cdc_states[0].txa_pin, DMA1_Channel5_IRQn);
+    usb_cdc_usart_irq_handler(0, usb_cdc_port_usarts[0], usb_cdc_states[0].txa_bitband_clear, DMA1_Channel5_IRQn);
 }
 
 void USART2_IRQHandler() {
     (void)USART2_IRQHandler;
-    usb_cdc_usart_irq_handler(1, usb_cdc_port_usarts[1], usb_cdc_states[1].txa_pin, DMA1_Channel6_IRQn);
+    usb_cdc_usart_irq_handler(1, usb_cdc_port_usarts[1], usb_cdc_states[1].txa_bitband_clear, DMA1_Channel6_IRQn);
 }
 
 void USART3_IRQHandler() {
     (void)USART3_IRQHandler;
-    usb_cdc_usart_irq_handler(2, usb_cdc_port_usarts[2], usb_cdc_states[2].txa_pin, DMA1_Channel3_IRQn);
+    usb_cdc_usart_irq_handler(2, usb_cdc_port_usarts[2], usb_cdc_states[2].txa_bitband_clear, DMA1_Channel3_IRQn);
 }
 
 /* Port Configuration & Control Lines Functions */
@@ -567,6 +568,8 @@ void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin) {
             usb_cdc_update_port_dtr(port);
         } else if (pin == cdc_pin_txa) {
             usb_cdc_update_port_txa(port);
+            usb_cdc_states[port].txa_bitband_clear =
+                gpio_pin_get_bitband_clear_addr(&device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa]);
         }
     }
 }
@@ -578,6 +581,8 @@ static void usb_cdc_configure_port(int port) {
         usb_cdc_update_port_rts(port);
         usb_cdc_update_port_dtr(port);
         usb_cdc_update_port_txa(port);
+        usb_cdc_states[port].txa_bitband_clear =
+                gpio_pin_get_bitband_clear_addr(&device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa]);
     }
 }
 
@@ -642,7 +647,6 @@ void usb_cdc_reset() {
         dma_rx_ch->CNDTR = USB_CDC_BUF_SIZE;
         dma_tx_ch->CCR |= DMA_CCR_MINC | DMA_CCR_DIR | DMA_CCR_TCIE;
         dma_tx_ch->CPAR = (uint32_t)&usart->DR;
-        usb_cdc_states[port].txa_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa];
     }
     NVIC_SetPriority(USART1_IRQn, SYSTEM_INTERRUTPS_PRIORITY_CRITICAL);
     NVIC_EnableIRQ(USART1_IRQn);

@@ -79,8 +79,8 @@ Note: **5 V** tolerant input pins are shown **in bold**.
 **TXA** (**TX** **A**ctive) is active when UART is transmitting data and
 can be used to control **DE** and **/RE** pins of RS-485 transceivers.
 
-**TXA** goes inactive within 1 us after the transmission is complete,
-which meets RS-485 and IO-link timing requirements at speeds up to 460 kBaud
+**TXA** goes inactive within 0.6 us after the transmission is complete,
+which meets RS-485 and IO-link timing requirements at speeds up to 920 kBaud
 with at least double safety margin.
 
 **DSR**, **DTR**, and **DCD**, **RI** are connected to the internal _weak pull-up_
