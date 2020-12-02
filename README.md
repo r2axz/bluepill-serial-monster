@@ -27,8 +27,8 @@ board works with your computer, don't bother fixing it.
 * None, even, odd parity;
 * 1, 1.5, and 2 stop bits;
 * Works with _CDC Class_ drives on _Linux_, _OS X_, and _Windows_;
-* Supports all standard baud rates;
-* Supports non-standard baud rates;
+* Supports all baud rates up to 2 MBaud;
+* **TXA** signal for controlling RS-485 transceivers (**DE**, **/RE**);
 * _DMA_ _RX_/_TX_ for high-speed communications;
 * _IDLE line_ detection for short response time;
 * Signed _INF_ driver for _Windows XP, 7, and 8_;
@@ -74,10 +74,14 @@ Note: **5 V** tolerant input pins are shown **in bold**.
 ## Control Signals (Default Configuration)
 
 **RTS**, **CTS**, **DSR**, **DTR**, **DCD**, **RI** are **active-low** signals,
-**TXA** is active-high signal.
+**TXA** is an active-high signal.
 
-**TXA** is active when UART is transmitting data and can be used to control
-**DE** and **/RE** signals of RS-485 converters and such.
+**TXA** (**TX** **A**ctive) is active when UART is transmitting data and
+can be used to control **DE** and **/RE** pins of RS-485 transceivers.
+
+**TXA** goes inactive within 1 us after the transmission is complete,
+which meets RS-485 and IO-link timing requirements at speeds up to 460 kBaud
+with at least double safety margin.
 
 **DSR**, **DTR**, and **DCD**, **RI** are connected to the internal _weak pull-up_
 resistors, so they remain inactive at rest.
