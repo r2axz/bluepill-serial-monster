@@ -145,7 +145,7 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bFunctionLength        = sizeof(usb_configuration_descriptor.cdc_acm_0),
         .bDescriptorType        = usb_descriptor_type_cs_interface,
         .bDescriptorSubType     = usb_descriptor_subtype_cdc_acm,
-        .bmCapabilities         = 0,
+        .bmCapabilities         = USB_CDC_ACM_CAPABILITIES,
     },
     .cdc_union_0 = {
         .bFunctionLength        = sizeof(usb_configuration_descriptor.cdc_union_0),
@@ -227,7 +227,7 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bFunctionLength        = sizeof(usb_configuration_descriptor.cdc_acm_1),
         .bDescriptorType        = usb_descriptor_type_cs_interface,
         .bDescriptorSubType     = usb_descriptor_subtype_cdc_acm,
-        .bmCapabilities         = 0,
+        .bmCapabilities         = USB_CDC_ACM_CAPABILITIES,
     },
     .cdc_union_1 = {
         .bFunctionLength        = sizeof(usb_configuration_descriptor.cdc_union_1),
@@ -309,7 +309,7 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bFunctionLength        = sizeof(usb_configuration_descriptor.cdc_acm_2),
         .bDescriptorType        = usb_descriptor_type_cs_interface,
         .bDescriptorSubType     = usb_descriptor_subtype_cdc_acm,
-        .bmCapabilities         = 0,
+        .bmCapabilities         = USB_CDC_ACM_CAPABILITIES,
     },
     .cdc_union_2 = {
         .bFunctionLength        = sizeof(usb_configuration_descriptor.cdc_union_2),

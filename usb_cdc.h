@@ -37,6 +37,13 @@ typedef enum {
     usb_descriptor_subtype_cdc_country         = 0x07,
 } __attribute__ ((packed)) usb_descriptor_subtype_cdc_t;
 
+#define USB_CDC_ACM_CAPABILITY_COMM_FEATURE         0x01
+#define USB_CDC_ACM_CAPABILITY_LINE_CODING          0x02
+#define USB_CDC_ACM_CAPABILITY_SEND_BREAK           0x04
+#define USB_CDC_ACM_CAPABILITY_NETWORK_CONNECTION   0x08
+
+#define USB_CDC_ACM_CAPABILITIES (USB_CDC_ACM_CAPABILITY_LINE_CODING)
+
 /* USB CDC Header Functional Descriptor */
 
 typedef struct  {
