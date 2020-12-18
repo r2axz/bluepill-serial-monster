@@ -772,7 +772,7 @@ usb_status_t usb_cdc_ctrl_process_request(usb_setup_t *setup, void **payload,
                 }
                 break;
             default:
-                usb_panic();
+                ;
             }
         }
     }
