@@ -4,9 +4,10 @@ SRCS	= main.c system_clock.c system_interrupts.c status_led.c usb_core.c usb_des
 	usb_io.c usb_uid.c usb_panic.c usb_cdc.c cdc_shell.c gpio.c device_config.c
 
 # Toolchain & Utils
-CC		= arm-none-eabi-gcc
-OBJCOPY		= arm-none-eabi-objcopy
-SIZE		= arm-none-eabi-size
+CROSS_COMPILE	?= arm-none-eabi-
+CC		= $(CROSS_COMPILE)gcc
+OBJCOPY		= $(CROSS_COMPILE)objcopy
+SIZE		= $(CROSS_COMPILE)size
 STFLASH		= st-flash
 STUTIL		= st-util
 CPPCHECK	= cppcheck
@@ -43,10 +44,10 @@ STARTUP		+= $(STM32_STARTUP:%.s=$(BUILD_DIR)/%.o)
 all: $(TARGET).hex $(TARGET).bin size
 
 $(TARGET).bin: $(TARGET).elf
-	$(OBJCOPY) -Obinary $(TARGET).elf $(TARGET).bin
+	$(OBJCOPY) -Obinary $< $@
 
 $(TARGET).hex: $(TARGET).elf
-	$(OBJCOPY) -Oihex $(TARGET).elf $(TARGET).hex
+	$(OBJCOPY) -Oihex $< $@
 
 $(TARGET).elf: $(OBJS) $(STARTUP)
 	$(CC) $(LDFLAGS) $^ -o $@
@@ -67,12 +68,12 @@ cppcheck: $(SRCS)
 	$(CPPCHECK) $(CHKFLAGS) $(STM32_INCLUDES) $(DEFINES) --output-file=$(CHKREPORT) $^
 
 .PHONY: flash
-flash: all
-	$(STFLASH) --format ihex write $(TARGET).hex
+flash: $(TARGET).hex
+	$(STFLASH) --format ihex write $<
 
 .PHONY: size
-size:
-	$(SIZE) $(TARGET).elf
+size: $(TARGET).elf
+	$(SIZE) $<
 
 .PHONY: clean
 clean:
