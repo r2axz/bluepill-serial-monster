@@ -43,10 +43,10 @@ STARTUP		+= $(STM32_STARTUP:%.s=$(BUILD_DIR)/%.o)
 all: $(TARGET).hex $(TARGET).bin size
 
 $(TARGET).bin: $(TARGET).elf
-	$(OBJCOPY) -Obinary $(TARGET).elf $(TARGET).bin
+	$(OBJCOPY) -Obinary $< $@
 
 $(TARGET).hex: $(TARGET).elf
-	$(OBJCOPY) -Oihex $(TARGET).elf $(TARGET).hex
+	$(OBJCOPY) -Oihex $< $@
 
 $(TARGET).elf: $(OBJS) $(STARTUP)
 	$(CC) $(LDFLAGS) $^ -o $@
@@ -67,12 +67,12 @@ cppcheck: $(SRCS)
 	$(CPPCHECK) $(CHKFLAGS) $(STM32_INCLUDES) $(DEFINES) --output-file=$(CHKREPORT) $^
 
 .PHONY: flash
-flash: all
-	$(STFLASH) --format ihex write $(TARGET).hex
+flash: $(TARGET).hex
+	$(STFLASH) --format ihex write $<
 
 .PHONY: size
-size:
-	$(SIZE) $(TARGET).elf
+size: $(TARGET).elf
+	$(SIZE) $<
 
 .PHONY: clean
 clean:
