@@ -28,7 +28,7 @@ typedef enum {
     usb_string_index_last,
 } __attribute__ ((packed)) usb_string_index_t;
 
-const usb_string_descriptor_t *usb_string_descriptors[usb_string_index_last];
+extern const usb_string_descriptor_t *usb_string_descriptors[usb_string_index_last];
 
 /* Endpoints */
 
@@ -55,7 +55,7 @@ enum {
 
 /* Device Descriptor */
 
-const usb_device_descriptor_t usb_device_descriptor;
+extern const usb_device_descriptor_t usb_device_descriptor;
 
 /* Configuration Descriptor */
 
@@ -93,6 +93,6 @@ typedef struct {
     usb_endpoint_descriptor_t           data_eptx_2;
 } __attribute__((packed)) usb_device_configuration_descriptor_t;
 
-const usb_device_configuration_descriptor_t usb_configuration_descriptor;
+extern const usb_device_configuration_descriptor_t usb_configuration_descriptor;
 
 #endif /* USB_DESCRIPTORS_H */
