@@ -39,6 +39,13 @@ board works with your computer, don't bother fixing it.
 (_PA12_, _PA11_) are used for _USB_ communication and cannot be remapped.
 If you need hardware flow control, use _UART2_ or _UART3_.
 
+## Donations
+
+If this project helped you with whatever you use it for
+or you just want to say thanks, you can buy me a coffee :)
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/r2axz)
+
 ## UART Signal Levels
 
 Although _STM32F103C8T6_ installed on the Blue Pill board is a **3.3 V**
