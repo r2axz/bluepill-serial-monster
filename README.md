@@ -35,9 +35,8 @@ board works with your computer, don't bother fixing it.
 * Built-in command shell for device parameters configuration;
 * No external dependencies other than _CMSIS_;
 
-(1) _UART1_ does not support hardware flow control because _RTS_/_CTS_ pins
-(_PA12_, _PA11_) are used for _USB_ communication and cannot be remapped.
-If you need hardware flow control, use _UART2_ or _UART3_.
+(1) _UART1_ does not support _CTS_ because it is occupied by USB (_PA11_)
+and cannot be remapped. _RTS_ can still be used.
 
 ## Donations
 
