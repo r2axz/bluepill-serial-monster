@@ -68,7 +68,7 @@ or damage may occur.**
 |:-------|:-------------:|:--------------|:--------------|:--------------|
 |   RX   |      IN       |    **PA10**   |      PA3      |    **PB11**   |
 |   TX   |      OUT      |      PA9      |      PA2      |      PB10     |
-|   RTS  |      OUT      |      N/A      |      PA1      |      PB14     |
+|   RTS  |      OUT      |    **PA15**   |      PA1      |      PB14     |
 |   CTS  |      IN       |      N/A      |      PA0      |    **PB13**   |
 |   DSR  |      IN       |    **PB7**    |    **PB4**    |    **PB6**    |
 |   DTR  |      OUT      |      PA4      |      PA5      |      PA6      |
