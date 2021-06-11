@@ -112,7 +112,8 @@ _bluepill-serial-monster_ provides a configuration shell that allows
 controlling various parameters of the UART signal lines.
 
 To access the configuration shell, open _UART1_ with any terminal emulator
-application (such as _screen_, _Tera Term_, etc.) and connect **PB5** to ground. Serial port settings do not matter.
+application (such as _screen_, _Tera Term_, etc.) and connect **PB5** to ground.
+Serial port settings do not matter.
 
 You should see the configuration shell prompt:
 
@@ -125,8 +126,9 @@ You should see the configuration shell prompt:
 ```
 
 The configuration shell has minimal support for ANSI escape sequences. You can
-use the arrow keys to move the cursor when editing a command, erase text with _Backspace_, and insert text anywhere in the command. You can also recall the
-last command by pressing _UP_.
+use the arrow keys to move the cursor when editing a command, erase text with _Backspace_,
+and insert text anywhere in the command. You can also recall the last command
+by pressing _UP_.
 
 Command and parameter names are case-sensitive.
 
@@ -275,7 +277,8 @@ _Windows 10_ does not require this and loads the standard driver automatically.
 
 A signed _INF_ file for _Windows XP, 7, and 8_ is included in the distribution.
 To install the _INF_ file, plug in _bluepill-serial-monster_ and point _Windows_
-to a directory containing both **bluepill-serial-monster.inf** and **bluepill-serial-monster.cat** files during a new device installation.
+to a directory containing both **bluepill-serial-monster.inf** and
+**bluepill-serial-monster.cat** files during a new device installation.
 
 Alternatively, you can open _Windows Device Manager_, right-click on any of the
 _Bluepill Serial Monster_ devices, choose _Update driver_ and point Windows to
