@@ -111,9 +111,9 @@ _UART DMA RX/TX_ buffer size is **1024** bytes.
 _bluepill-serial-monster_ provides a configuration shell that allows
 controlling various parameters of the UART signal lines.
 
-To access the configuration shell, open _UART1_ with any terminal emulator
-application (such as _screen_, _Tera Term_, etc.) and connect **PB5** to ground.
-Serial port settings do not matter.
+To access the configuration shell, open the first USB serial port (UART1)
+with any terminal emulator application (such as _screen_, _Tera Term_, etc.)
+and connect **PB5** to ground. Serial port settings do not matter.
 
 You should see the configuration shell prompt:
 
