@@ -210,7 +210,7 @@ static void usb_cdc_set_port_dtr(int port, int dtr_active) {
 }
 
 static void usb_cdc_update_port_rts(int port) {
-    if ((port < USB_CDC_NUM_PORTS) && (port != 0)) {
+    if ((port < USB_CDC_NUM_PORTS)) {
         const gpio_pin_t *rts_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_rts];
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
         circ_buf_t *rx_buf = &cdc_state->rx_buf;

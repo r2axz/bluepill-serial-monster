@@ -35,9 +35,8 @@ board works with your computer, don't bother fixing it.
 * Built-in command shell for device parameters configuration;
 * No external dependencies other than _CMSIS_;
 
-(1) _UART1_ does not support hardware flow control because _RTS_/_CTS_ pins
-(_PA12_, _PA11_) are used for _USB_ communication and cannot be remapped.
-If you need hardware flow control, use _UART2_ or _UART3_.
+(1) _UART1_ does not support _CTS_ because it is occupied by USB (_PA11_)
+and cannot be remapped. _RTS_ can still be used.
 
 ## Donations
 
@@ -68,7 +67,7 @@ or damage may occur.**
 |:-------|:-------------:|:--------------|:--------------|:--------------|
 |   RX   |      IN       |    **PA10**   |      PA3      |    **PB11**   |
 |   TX   |      OUT      |      PA9      |      PA2      |      PB10     |
-|   RTS  |      OUT      |      N/A      |      PA1      |      PB14     |
+|   RTS  |      OUT      |    **PA15**   |      PA1      |      PB14     |
 |   CTS  |      IN       |      N/A      |      PA0      |    **PB13**   |
 |   DSR  |      IN       |    **PB7**    |    **PB4**    |    **PB6**    |
 |   DTR  |      OUT      |      PA4      |      PA5      |      PA6      |
@@ -112,8 +111,9 @@ _UART DMA RX/TX_ buffer size is **1024** bytes.
 _bluepill-serial-monster_ provides a configuration shell that allows
 controlling various parameters of the UART signal lines.
 
-To access the configuration shell, open _UART1_ with any terminal emulator
-application (such as _screen_, _Tera Term_, etc.) and connect **PB5** to ground. Serial port settings do not matter.
+To access the configuration shell, open the first USB serial port (UART1)
+with any terminal emulator application (such as _screen_, _Tera Term_, etc.)
+and connect **PB5** to ground. Serial port settings do not matter.
 
 You should see the configuration shell prompt:
 
@@ -126,8 +126,9 @@ You should see the configuration shell prompt:
 ```
 
 The configuration shell has minimal support for ANSI escape sequences. You can
-use the arrow keys to move the cursor when editing a command, erase text with _Backspace_, and insert text anywhere in the command. You can also recall the
-last command by pressing _UP_.
+use the arrow keys to move the cursor when editing a command, erase text with _Backspace_,
+and insert text anywhere in the command. You can also recall the last command
+by pressing _UP_.
 
 Command and parameter names are case-sensitive.
 
@@ -276,7 +277,8 @@ _Windows 10_ does not require this and loads the standard driver automatically.
 
 A signed _INF_ file for _Windows XP, 7, and 8_ is included in the distribution.
 To install the _INF_ file, plug in _bluepill-serial-monster_ and point _Windows_
-to a directory containing both **bluepill-serial-monster.inf** and **bluepill-serial-monster.cat** files during a new device installation.
+to a directory containing both **bluepill-serial-monster.inf** and
+**bluepill-serial-monster.cat** files during a new device installation.
 
 Alternatively, you can open _Windows Device Manager_, right-click on any of the
 _Bluepill Serial Monster_ devices, choose _Update driver_ and point Windows to
