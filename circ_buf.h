@@ -12,7 +12,7 @@
 typedef struct  {
     int head;
     int tail;
-    uint8_t data[0];
+    uint8_t data[];
 } circ_buf_t;
 
 /* Returns number of bytes in buffer ()*/
