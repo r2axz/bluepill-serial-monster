@@ -21,6 +21,7 @@ typedef struct {
 
 void device_config_init();
 device_config_t *device_config_get();
+const device_config_t *device_config_get_default();
 
 void device_config_save();
 void device_config_reset();

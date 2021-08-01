@@ -67,6 +67,8 @@ static const char cdc_shell_err_uart_missing_polarity[]             = "Error, mi
 static const char cdc_shell_err_uart_invalid_polarity[]             = "Error, invalid polarity.\r\n";
 static const char cdc_shell_err_uart_missing_pull_type[]            = "Error, missing pull type.\r\n";
 static const char cdc_shell_err_uart_invalid_pull_type[]            = "Error, invalid pull type.\r\n";
+static const char cdc_shell_err_uart_missing_use[]                  = "Error, missing use.\r\n";
+static const char cdc_shell_err_uart_invalid_use[]                  = "Error, invalid use.\r\n";
 static const char cdc_shell_err_cannot_set_output_type_for_input[]  = "Error, cannot set output type for input pin.\r\n";
 static const char cdc_shell_err_cannot_change_polarity[]            = "Error, cannot change polarity of alternate function pins.\r\n";
 static const char cdc_shell_err_cannot_set_pull_for_output[]        = "Error, cannot pull type for output pin.\r\n";
@@ -122,6 +124,19 @@ static gpio_pull_t _cdc_uart_pull_type_by_name(char *name) {
         }
     }
     return gpio_pull_unknown;
+}
+
+static const char *_cdc_uart_uses[cdc_use_last] = {
+    "uart", "gpio",
+};
+
+static cdc_use_t _cdc_uart_use_by_name(char *name) {
+    for (int i = 0; i < sizeof(_cdc_uart_uses) / sizeof(*_cdc_uart_uses); i++) {
+        if (strcmp(name, _cdc_uart_uses[i]) == 0) {
+            return (cdc_use_t)i;
+        }
+    }
+    return cdc_use_unknown;
 }
 
 static void cdc_shell_cmd_uart_show(int port) {
@@ -224,6 +239,28 @@ static int cdc_shell_cmd_uart_set_pull_type(int port, cdc_pin_t uart_pin, gpio_p
     return 0;
 }
 
+static int cdc_shell_cmd_uart_set_use(int port, cdc_pin_t uart_pin, cdc_use_t use) {
+    for (int port_index = ((port == -1) ? 0 : port); port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1); port_index++) {
+        gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
+
+        if (use == cdc_use_uart && pin->func == gpio_func_unknown) {
+            // switch uart-controlled pin
+            const gpio_pin_t *default_pin = &device_config_get_default()->cdc_config.port_config[port_index].pins[uart_pin];
+            pin->func = default_pin->func;
+            usb_cdc_reconfigure_port_pin(port, uart_pin);
+        } else if (use == cdc_use_gpio && pin->func != gpio_func_unknown) {
+            // switch to gpio control
+            pin->func = gpio_func_unknown;
+            // usb_cdc_reconfigure_port_pin(port, uart_pin);
+            // TODO: reconfigure in gpio_control
+        } else {
+            cdc_shell_write_string("Use does not change.\r\n");
+            return -1;
+        }
+    }
+    return 0;
+}
+
 static void cdc_shell_cmd_uart(int argc, char *argv[]) {
     if (argc--) {
         int port;
@@ -306,6 +343,25 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
                                     }
                                 } else {
                                     cdc_shell_write_string(cdc_shell_err_uart_missing_pull_type);
+                                    return;
+                                }
+                            } else if (strcmp(*argv, "use") == 0) {
+                                argc--;
+                                argv++;
+                                if (argc) {
+                                    cdc_use_t use = _cdc_uart_use_by_name(*argv);
+                                    if (use != cdc_use_unknown) {
+                                        argc--;
+                                        argv++;
+                                        if (cdc_shell_cmd_uart_set_use(port, uart_pin, use) == -1) {
+                                            return;
+                                        }
+                                    } else {
+                                        cdc_shell_write_string(cdc_shell_err_uart_invalid_use);
+                                        return;
+                                    }
+                                } else {
+                                    cdc_shell_write_string(cdc_shell_err_uart_missing_use);
                                     return;
                                 }
                             } else {

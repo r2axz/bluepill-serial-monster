@@ -119,6 +119,10 @@ device_config_t *device_config_get() {
     return &current_device_config;
 }
 
+const device_config_t *device_config_get_default() {
+    return &default_device_config;
+}
+
 void device_config_save() {
     uint16_t *last_config_magic = 0;
     uint8_t *config_page = (uint8_t*)DEVICE_CONFIG_BASE_ADDR;

@@ -197,7 +197,9 @@ static void usb_cdc_update_port_dtr(int port) {
     if (port < USB_CDC_NUM_PORTS) {
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
         const gpio_pin_t *dtr_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_dtr];
-        gpio_pin_set(dtr_pin, cdc_state->dtr_active);
+        if (dtr_pin->func != gpio_func_unknown) {
+            gpio_pin_set(dtr_pin, cdc_state->dtr_active);
+        }
     }
 }
 
@@ -212,10 +214,12 @@ static void usb_cdc_set_port_dtr(int port, int dtr_active) {
 static void usb_cdc_update_port_rts(int port) {
     if ((port < USB_CDC_NUM_PORTS)) {
         const gpio_pin_t *rts_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_rts];
-        usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
-        circ_buf_t *rx_buf = &cdc_state->rx_buf;
-        int rts_active = ((circ_buf_space(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE) > (USB_CDC_BUF_SIZE>>1))) && cdc_state->rts_active;
-        gpio_pin_set(rts_pin, rts_active);
+        if (rts_pin->func != gpio_func_unknown) {
+            usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
+            circ_buf_t *rx_buf = &cdc_state->rx_buf;
+            int rts_active = ((circ_buf_space(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE) > (USB_CDC_BUF_SIZE >> 1))) && cdc_state->rts_active;
+            gpio_pin_set(rts_pin, rts_active);
+        }
     }
 }
 
@@ -230,7 +234,9 @@ static void usb_cdc_update_port_txa(int port) {
     if (port < USB_CDC_NUM_PORTS) {
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
         const gpio_pin_t *txa_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa];
-        gpio_pin_set(txa_pin, cdc_state->txa_active);
+        if (txa_pin->func != gpio_func_unknown) {
+            gpio_pin_set(txa_pin, cdc_state->txa_active);
+        }
     }
 }
 
@@ -561,15 +567,17 @@ void USART3_IRQHandler() {
 
 void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin) {
     if (port < USB_CDC_NUM_PORTS && pin < cdc_pin_last) {
-        gpio_pin_init(&device_config_get()->cdc_config.port_config[port].pins[pin]);
-        if (pin == cdc_pin_rts) {
-            usb_cdc_update_port_rts(port);
-        } else if (pin == cdc_pin_dtr) {
-            usb_cdc_update_port_dtr(port);
-        } else if (pin == cdc_pin_txa) {
-            usb_cdc_update_port_txa(port);
-            usb_cdc_states[port].txa_bitband_clear =
-                gpio_pin_get_bitband_clear_addr(&device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa]);
+        const gpio_pin_t *pincfg = &device_config_get()->cdc_config.port_config[port].pins[pin];
+        if (pincfg->func != gpio_func_unknown) {
+            gpio_pin_init(pincfg);
+            if (pin == cdc_pin_rts) {
+                usb_cdc_update_port_rts(port);
+            } else if (pin == cdc_pin_dtr) {
+                usb_cdc_update_port_dtr(port);
+            } else if (pin == cdc_pin_txa) {
+                usb_cdc_update_port_txa(port);
+                usb_cdc_states[port].txa_bitband_clear = gpio_pin_get_bitband_clear_addr(&device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa]);
+            }
         }
     }
 }

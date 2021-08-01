@@ -191,6 +191,14 @@ typedef enum {
 } __attribute__ ((packed)) cdc_pin_t;
 
 
+typedef enum {
+    cdc_use_uart,
+    cdc_use_gpio,
+    cdc_use_unknown,
+    cdc_use_last = cdc_use_unknown,
+} __attribute__ ((packed)) cdc_use_t;
+
+
 /* Configuration Changed Hooks */
 
 void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin);
