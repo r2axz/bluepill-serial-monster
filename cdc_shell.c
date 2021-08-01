@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -12,6 +12,7 @@
 #include "cdc_config.h"
 #include "device_config.h"
 #include "cdc_shell.h"
+#include "gpio_control.h"
 
 
 static const char cdc_shell_banner[]                = "\r\n\r\n"
@@ -244,15 +245,14 @@ static int cdc_shell_cmd_uart_set_use(int port, cdc_pin_t uart_pin, cdc_use_t us
         gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
 
         if (use == cdc_use_uart && pin->func == gpio_func_unknown) {
-            // switch uart-controlled pin
+            // was gpio-controlled, becomes uart-controlled
             const gpio_pin_t *default_pin = &device_config_get_default()->cdc_config.port_config[port_index].pins[uart_pin];
             pin->func = default_pin->func;
             usb_cdc_reconfigure_port_pin(port, uart_pin);
         } else if (use == cdc_use_gpio && pin->func != gpio_func_unknown) {
-            // switch to gpio control
+            // was uart-controlled, becomes gpio-conrolled
             pin->func = gpio_func_unknown;
-            // usb_cdc_reconfigure_port_pin(port, uart_pin);
-            // TODO: reconfigure in gpio_control
+            gpio_control_reconfigure_pin(pin->port, pin->pin);
         } else {
             cdc_shell_write_string("Use does not change.\r\n");
             return -1;
@@ -378,7 +378,11 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
         }
     } else {
         cdc_shell_write_string(cdc_shell_err_uart_missing_arguments);
-    } 
+    }
+}
+
+static void cdc_shell_cmd_gpio(int argc, char *argv[]) {
+    cdc_shell_write_string("Not implemented.\r\n");
 }
 
 
@@ -408,7 +412,7 @@ static void cdc_shell_cmd_config(int argc, char *argv[]) {
 static void cdc_shell_cmd_help(int argc, char *argv[]);
 
 static const cdc_shell_cmd_t cdc_shell_commands[] = {
-    { 
+    {
         .cmd            = "help",
         .handler        = cdc_shell_cmd_help,
         .description    = "shows this help message, use \"help command-name\" to get command-specific help",
@@ -422,7 +426,7 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
                           "Use: \"config save\" to permanently save device configuration.\r\n"
                           "Use: \"config reset\" to reset device configuration to default.",
     },
-    { 
+    {
         .cmd            = "uart",
         .handler        = cdc_shell_cmd_uart,
         .description    = "set and view UART parameters",
@@ -436,6 +440,20 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
                           "  pull\t\t[floating|up|down]\r\n"
                           "Example: \"uart 1 tx output od\" sets UART1 TX output type to open-drain\r\n"
                           "Example: \"uart 3 rts active high dcd active high pull down\" allows to set multiple parameters at once."
+    },
+    {
+        .cmd            = "gpio",
+        .handler        = cdc_shell_cmd_gpio,
+        .description    = "Configure GPIO pins",
+        .usage          = "Usage: gpio pn|all config|show|read|write"
+                          "Use \"gpio pn config dir in|out [out pp|od] [val 0|1] [pull up|down]\" to configure GPIO pin\r\n"
+                          "  pn is GPIO pin, ex. A5 or B11\r\n"
+                          "  dir\t[in|out]\r\n"
+                          "  out\t[pp|od] for output only\r\n"
+                          "  val\t[0|1] for output only\r\n"
+                          "  pull\t[up|down] for input only\r\n"
+                          "Use \"gpio read all|pn pn+1 pn+2 ...\" to read state of pins\r\n"
+                          "Use \"gpio write pn 0|1 pn+1 [0|1] ...\" to set values of outputs\r\n"
     },
     { 0 }
 };
