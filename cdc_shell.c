@@ -7,6 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "usb_cdc.h"
 #include "gpio.h"
 #include "cdc_config.h"
@@ -381,8 +382,58 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
     }
 }
 
-static void cdc_shell_cmd_gpio(int argc, char *argv[]) {
+
+
+static void cdc_shell_cmd_gpio_config(int argc, char *argv[]) {
     cdc_shell_write_string("Not implemented.\r\n");
+}
+
+static void cdc_shell_cmd_gpio_read(int argc, char *argv[]) {
+    if (strcmp(*argv, "all") == 0) {
+        for (int portnum = 0; portnum < GPIO_CONGROL_NUM_PORTS; portnum++) {
+            for (int pinnum = 0; pinnum < GPIO_CONTROL_PINS_PER_PORT; pinnum++) {
+                gpio_control_pin_t *gc_pin = &device_config_get()->gpio_control.ports[portnum].pins[pinnum];
+                if (gc_pin->dir == gpio_dir_unknown) {
+                    // marked as unusable
+                    continue;
+                }
+                gpio_pin_t *u_pin = gpio_control_find_uart_pincfg(gc_pin);
+                if (u_pin && u_pin->func != gpio_func_unknown) {
+                    // used by uart
+                    continue;
+                }
+                char buf[10];
+                int val = gpio_control_read(portnum, pinnum);
+                snprintf(buf, sizeof(buf), "%c%d:%d ", portnum == 0 ? 'A' : 'B', pinnum, val);
+                cdc_shell_write_string(buf);
+            }
+        }
+        cdc_shell_write_string("\r\n");
+        return;
+    }
+}
+
+static void cdc_shell_cmd_gpio_write(int argc, char *argv[]) {
+    cdc_shell_write_string("Not implemented.\r\n");
+}
+
+static void cdc_shell_cmd_gpio(int argc, char *argv[]) {
+    if (!argc--) {
+       cdc_shell_write_string("Missing gpio subcommand\r\n");
+       return;
+    }
+    const char *subcmd = *argv;
+    argv++;
+    if (strstr(subcmd, "conf") == subcmd) {
+        return cdc_shell_cmd_gpio_config(argc, argv);
+    }
+    if (strstr(subcmd, "r") == subcmd) {
+        return cdc_shell_cmd_gpio_read(argc, argv);
+    }
+    if (strstr(subcmd, "w") == subcmd) {
+        return cdc_shell_cmd_gpio_write(argc, argv);
+    }
+    cdc_shell_write_string("Unknown gpio command.\r\n");
 }
 
 
@@ -444,14 +495,14 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
     {
         .cmd            = "gpio",
         .handler        = cdc_shell_cmd_gpio,
-        .description    = "Configure GPIO pins",
-        .usage          = "Usage: gpio pn|all config|show|read|write"
-                          "Use \"gpio pn config dir in|out [out pp|od] [val 0|1] [pull up|down]\" to configure GPIO pin\r\n"
+        .description    = "configure and control GPIO",
+        .usage          = "Usage: gpio config|show|read|write ..."
+                          "Use \"gpio config pn dir in|out [out pp|od] [val 0|1] [pull up|down]\" to configure GPIO pin\r\n"
                           "  pn is GPIO pin, ex. A5 or B11\r\n"
                           "  dir\t[in|out]\r\n"
-                          "  out\t[pp|od] for output only\r\n"
+                          "  output\t[pp|od] for output only\r\n"
                           "  val\t[0|1] for output only\r\n"
-                          "  pull\t[up|down] for input only\r\n"
+                          "  pull\t\t[floating|up|down] for input only\r\n"
                           "Use \"gpio read all|pn pn+1 pn+2 ...\" to read state of pins\r\n"
                           "Use \"gpio write pn 0|1 pn+1 [0|1] ...\" to set values of outputs\r\n"
     },

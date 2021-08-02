@@ -48,3 +48,21 @@ void gpio_control_reconfigure_pin(GPIO_TypeDef *gpio_port, uint8_t gpio_pin_num)
     _pin_control_cfg_prepare(&p, uart_pin, gpio_pin_cfg);
     gpio_pin_init(&p);
 }
+
+gpio_pin_t *gpio_control_find_uart_pincfg(gpio_control_pin_t *gc_pin) {
+    // if (gc_pin->dir == gpio_dir_unknown) return NULL;
+    if (gc_pin->uart_port < 0) return NULL;
+    return &device_config_get()->cdc_config.port_config[gc_pin->uart_port].pins[gc_pin->uart_pin];
+}
+
+int gpio_control_read(int portnum, int pinnum) {
+    if (portnum >= GPIO_CONGROL_NUM_PORTS) return 0;
+    if (pinnum >= GPIO_CONTROL_PINS_PER_PORT) return 0;
+    gpio_control_pin_t *gc_pin = &device_config_get()->gpio_control.ports[portnum].pins[pinnum];
+    gpio_pin_t *u_pin = gpio_control_find_uart_pincfg(gc_pin);
+    if (u_pin == NULL) return 0;
+
+    gpio_pin_t p;
+    _pin_control_cfg_prepare(&p, u_pin, gc_pin);
+    return gpio_pin_get(&p);
+}

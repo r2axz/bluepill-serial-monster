@@ -12,6 +12,7 @@
 #include "usb_cdc.h"
 
 #define GPIO_CONTROL_PINS_PER_PORT 16
+#define GPIO_CONGROL_NUM_PORTS 2
 
 typedef struct {
     int             uart_port; // -1 if no uart port association
@@ -32,5 +33,8 @@ typedef struct {
 
 
 void gpio_control_reconfigure_pin(GPIO_TypeDef *gpio_port, uint8_t gpio_pin);
+gpio_pin_t *gpio_control_find_uart_pincfg(gpio_control_pin_t *gc_pin);
+
+int gpio_control_read(int portnum, int pinnum);
 
 #endif
