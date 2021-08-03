@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -243,7 +243,7 @@ void usb_poll() {
         status_led_set(1);
     } else if (istr & USB_ISTR_RESET) {
         USB->ISTR = (uint16_t)(~USB_ISTR_RESET);
-        usb_device_handle_reset();   
+        usb_device_handle_reset();
     } else if (istr & USB_ISTR_SUSP) {
         USB->ISTR = (uint16_t)(~USB_ISTR_SUSP);
         USB->CNTR |= USB_CNTR_FSUSP;

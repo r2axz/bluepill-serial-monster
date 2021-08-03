@@ -141,6 +141,19 @@ static cdc_use_t _cdc_uart_use_by_name(char *name) {
     return cdc_use_unknown;
 }
 
+static const char *_gpio_directions[gpio_dir_last] = {
+    "in", "out",
+};
+
+static gpio_dir_t _gpio_dir_by_name(char *name) {
+    for (int i = 0; i < sizeof(_gpio_directions) / sizeof(*_gpio_directions); i++) {
+        if (strcmp(name, _gpio_directions[i]) == 0) {
+            return (gpio_dir_t)i;
+        }
+    }
+    return gpio_dir_unknown;
+}
+
 static void cdc_shell_cmd_uart_show(int port) {
     const char *uart_str = "UART";
     const char *na_str = "n/a";
@@ -253,7 +266,7 @@ static int cdc_shell_cmd_uart_set_use(int port, cdc_pin_t uart_pin, cdc_use_t us
         } else if (use == cdc_use_gpio && pin->func != gpio_func_unknown) {
             // was uart-controlled, becomes gpio-conrolled
             pin->func = gpio_func_unknown;
-            gpio_control_reconfigure_pin(pin->port, pin->pin);
+            gpio_control_reconfigure_pin(pin->port == GPIOA ? 0 : 1, pin->pin);
         } else {
             cdc_shell_write_string("Use does not change.\r\n");
             return -1;
@@ -382,41 +395,166 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
     }
 }
 
-
-
-static void cdc_shell_cmd_gpio_config(int argc, char *argv[]) {
-    cdc_shell_write_string("Not implemented.\r\n");
+static void cdc_shell_gpio_print_value(int portnum, int pinnum) {
+    char buf[10];
+    char valc = '?';
+    gpio_control_pin_t *gc_pin = &device_config_get()->gpio_control.ports[portnum].pins[pinnum];
+    if (gc_pin->dir != gpio_dir_unknown) {
+        gpio_pin_t *u_pin = gpio_control_find_uart_pincfg(gc_pin);
+        if (!u_pin || u_pin->func == gpio_func_unknown) {
+            int val = gpio_control_read(portnum, pinnum);
+            valc = val ? '1' : '0';
+        }
+    }
+    snprintf(buf, sizeof(buf), "%c%d:%c ", portnum == 0 ? 'A' : 'B', pinnum, valc);
+    cdc_shell_write_string(buf);
 }
 
-static void cdc_shell_cmd_gpio_read(int argc, char *argv[]) {
-    if (strcmp(*argv, "all") == 0) {
+static void cdc_shell_gpio_print_config(int portnum, int pinnum) {
+    char buf[50];
+    gpio_control_pin_t *gc_pin = &device_config_get()->gpio_control.ports[portnum].pins[pinnum];
+    if (gc_pin->dir == gpio_dir_unknown) {
+        snprintf(buf, sizeof(buf), "%c%d: !!\r\n", portnum == 0 ? 'A' : 'B', pinnum);
+        cdc_shell_write_string(buf);
+        return;
+    }
+    gpio_pin_t *u_pin = gpio_control_find_uart_pincfg(gc_pin);
+    if (!u_pin || u_pin->func != gpio_func_unknown) {
+        snprintf(buf, sizeof(buf), "%c%d: ??\r\n", portnum == 0 ? 'A' : 'B', pinnum);
+        cdc_shell_write_string(buf);
+        return;
+
+    }
+    const char *dir = gc_pin->dir == gpio_dir_output ? "output" : "input";
+    const char *outtype = _cdc_uart_output_types[gc_pin->output];
+    const char *pull = _cdc_uart_pull_types[gc_pin->pull];
+    const char *val = gc_pin->val ? "1" : "0";
+    snprintf(buf, sizeof(buf), "%c%d: %s %s %s %s\r\n", portnum == 0 ? 'A' : 'B', pinnum, dir, outtype, pull, val);
+    cdc_shell_write_string(buf);
+}
+
+static int cdc_shell_gpio_parse_gpio(const char *arg, int *portnum, int *pinnum) {
+    if (*arg == 'a' || *arg == 'A') {
+        *portnum = 0;
+    } else if (*arg == 'b' || *arg == 'B') {
+        *portnum = 1;
+    } else {
+        return -1;
+    }
+    int pin = atoi(arg + 1);
+    if (pin < 0 || pin >= GPIO_CONTROL_PINS_PER_PORT) {
+        return -1;
+    }
+    *pinnum = pin;
+    return 0;
+}
+
+static void cdc_shell_gpio_cmd_config(int argc, char *argv[]) {
+    if (argc < 3) {
+        cdc_shell_write_string("Too few arguments to gpio config.\r\n");
+        return;
+    }
+    int portnum, pinnum;
+    if (cdc_shell_gpio_parse_gpio(*argv, &portnum, &pinnum) != 0) {
+        cdc_shell_write_string("Bad gpio.\r\n");
+        return;
+    }
+    argc--; argv++;
+    gpio_control_pin_t *gc_pin = &device_config_get()->gpio_control.ports[portnum].pins[pinnum];
+
+    gpio_control_pin_t new_pin = *gc_pin;
+    while (argc >= 2) {
+        if (strcmp(*argv, "dir") == 0) {
+            argc--; argv++;
+            gpio_dir_t dir = _gpio_dir_by_name(*argv);
+            if (dir != gpio_dir_unknown) {
+                new_pin.dir = dir;
+            }
+        } else if (strcmp(*argv, "output") == 0) {
+            argc--; argv++;
+            gpio_output_t output = _cdc_uart_output_type_by_name(*argv);
+            if (output != gpio_output_unknown) {
+                new_pin.output = output;
+            }
+        } else if (strcmp(*argv, "val") == 0) {
+            argc--; argv++;
+            if ((*argv)[0] == '1') {
+                new_pin.val = 1;
+            } else {
+                new_pin.val = 0;
+            }
+        } else if (strcmp(*argv, "pull") == 0) {
+            argc--; argv++;
+            gpio_pull_t pull = _cdc_uart_pull_type_by_name(*argv);
+            if (pull != gpio_pull_unknown) {
+                new_pin.pull = pull;
+            }
+        } else {
+            char buf[50];
+            snprintf(buf, sizeof(buf), "unknown %s\r\n", *argv);
+            cdc_shell_write_string(buf);
+            return;
+        }
+        argc--; argv++;
+    }
+    if (memcmp(&new_pin, gc_pin, sizeof(gpio_control_pin_t)) != 0) {
+        *gc_pin = new_pin;
+        gpio_control_reconfigure_pin(portnum, pinnum);
+    }
+    cdc_shell_gpio_print_config(portnum, pinnum);
+
+}
+
+static void cdc_shell_gpio_cmd_read(int argc, char *argv[]) {
+    if (argc == 0 || strcmp(*argv, "all") == 0) {
         for (int portnum = 0; portnum < GPIO_CONGROL_NUM_PORTS; portnum++) {
             for (int pinnum = 0; pinnum < GPIO_CONTROL_PINS_PER_PORT; pinnum++) {
-                gpio_control_pin_t *gc_pin = &device_config_get()->gpio_control.ports[portnum].pins[pinnum];
-                if (gc_pin->dir == gpio_dir_unknown) {
-                    // marked as unusable
-                    continue;
+                if (gpio_control_pin_get_use(portnum, pinnum) == cdc_use_gpio) {
+                    cdc_shell_gpio_print_value(portnum, pinnum);
                 }
-                gpio_pin_t *u_pin = gpio_control_find_uart_pincfg(gc_pin);
-                if (u_pin && u_pin->func != gpio_func_unknown) {
-                    // used by uart
-                    continue;
-                }
-                char buf[10];
-                int val = gpio_control_read(portnum, pinnum);
-                snprintf(buf, sizeof(buf), "%c%d:%d ", portnum == 0 ? 'A' : 'B', pinnum, val);
-                cdc_shell_write_string(buf);
             }
         }
-        cdc_shell_write_string("\r\n");
+    } else {
+        while (argc--) {
+            int portnum, pinnum;
+            if (cdc_shell_gpio_parse_gpio(*argv, &portnum, &pinnum) != 0) {
+                cdc_shell_write_string("Bad gpio.\r\n");
+                return;
+            }
+            cdc_shell_gpio_print_value(portnum, pinnum);
+            argv++;
+        }
+    }
+    cdc_shell_write_string("\r\n");
+}
+
+static void cdc_shell_gpio_cmd_write(int argc, char *argv[]) {
+    int portnum, pinnum;
+    if (argc < 2) {
+        cdc_shell_write_string("Bad arguments.\r\n");
         return;
+    }
+    if (cdc_shell_gpio_parse_gpio(*argv, &portnum, &pinnum) != 0) {
+        cdc_shell_write_string("Bad gpio.\r\n");
+        return;
+    }
+    argc--; argv++;
+    if ((*argv)[0] == '0') {
+        gpio_control_write(portnum, pinnum, 0);
+    } else {
+        gpio_control_write(portnum, pinnum, 1);
     }
 }
 
-static void cdc_shell_cmd_gpio_write(int argc, char *argv[]) {
-    cdc_shell_write_string("Not implemented.\r\n");
+static void cdc_shell_gpio_cmd_show(int argc, char *argv[]) {
+    for (int portnum = 0; portnum < GPIO_CONGROL_NUM_PORTS; portnum++) {
+        for (int pinnum = 0; pinnum < GPIO_CONTROL_PINS_PER_PORT; pinnum++) {
+            if (gpio_control_pin_get_use(portnum, pinnum) == cdc_use_gpio) {
+                cdc_shell_gpio_print_config(portnum, pinnum);
+            }
+        }
+    }
 }
-
 static void cdc_shell_cmd_gpio(int argc, char *argv[]) {
     if (!argc--) {
        cdc_shell_write_string("Missing gpio subcommand\r\n");
@@ -425,13 +563,16 @@ static void cdc_shell_cmd_gpio(int argc, char *argv[]) {
     const char *subcmd = *argv;
     argv++;
     if (strstr(subcmd, "conf") == subcmd) {
-        return cdc_shell_cmd_gpio_config(argc, argv);
+        return cdc_shell_gpio_cmd_config(argc, argv);
     }
     if (strstr(subcmd, "r") == subcmd) {
-        return cdc_shell_cmd_gpio_read(argc, argv);
+        return cdc_shell_gpio_cmd_read(argc, argv);
     }
     if (strstr(subcmd, "w") == subcmd) {
-        return cdc_shell_cmd_gpio_write(argc, argv);
+        return cdc_shell_gpio_cmd_write(argc, argv);
+    }
+    if (strstr(subcmd, "s") == subcmd) {
+        return cdc_shell_gpio_cmd_show(argc, argv);
     }
     cdc_shell_write_string("Unknown gpio command.\r\n");
 }

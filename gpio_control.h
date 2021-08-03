@@ -20,7 +20,7 @@ typedef struct {
     gpio_dir_t      dir; // unusable pins are marked with dir_unknown
     gpio_pull_t     pull;
     gpio_output_t   output;
-    gpio_polarity_t val;
+    uint8_t         val;
 } __attribute__ ((packed)) gpio_control_pin_t;
 
 typedef struct {
@@ -32,9 +32,12 @@ typedef struct {
 } __attribute__ ((packed)) gpio_control_config_t;
 
 
-void gpio_control_reconfigure_pin(GPIO_TypeDef *gpio_port, uint8_t gpio_pin);
+void gpio_control_reconfigure_pin(int portnum, int pinnum);
 gpio_pin_t *gpio_control_find_uart_pincfg(gpio_control_pin_t *gc_pin);
 
+cdc_use_t gpio_control_pin_get_use(int portnum, int pinnum);
+
 int gpio_control_read(int portnum, int pinnum);
+int gpio_control_write(int portnum, int pinnum, int val);
 
 #endif
