@@ -69,7 +69,7 @@ cppcheck: $(SRCS)
 
 .PHONY: flash
 flash: $(TARGET).hex
-	$(STFLASH) --format ihex write $<
+	$(STFLASH) --reset --format ihex write $<
 
 .PHONY: size
 size: $(TARGET).elf
