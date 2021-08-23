@@ -354,7 +354,7 @@ static void usb_cdc_port_start_rx(int port) {
     dma_rx_ch->CCR |= DMA_CCR_EN;
 }
 
-static void usb_cdc_port_rx_interrupt(int port) {
+static void usb_cdc_sync_rx_buffer(int port) {
     circ_buf_t *rx_buf = &usb_cdc_states[port].rx_buf;
     int rx_buf_tail = rx_buf->tail;
     size_t current_rx_bytes_available = circ_buf_count(rx_buf->head, rx_buf_tail, USB_CDC_BUF_SIZE);
@@ -478,13 +478,6 @@ static void usb_cdc_port_tx_complete(int port) {
 
 /* DMA Interrupt Handlers */
 
-void DMA1_Channel5_IRQHandler() {
-    (void)DMA1_Channel5_IRQHandler;
-    uint32_t status = DMA1->ISR & ( DMA_ISR_TCIF5 | DMA_ISR_HTIF5);
-    DMA1->IFCR = status;
-    usb_cdc_port_rx_interrupt(0);
-}
-
 void DMA1_Channel4_IRQHandler() {
     (void)DMA1_Channel4_IRQHandler;
     uint32_t status = DMA1->ISR & ( DMA_ISR_TCIF4 );
@@ -492,25 +485,11 @@ void DMA1_Channel4_IRQHandler() {
     usb_cdc_port_tx_complete(0);
 }
 
-void DMA1_Channel6_IRQHandler() {
-    (void)DMA1_Channel6_IRQHandler;
-    uint32_t status = DMA1->ISR & ( DMA_ISR_TCIF6 | DMA_ISR_HTIF6);
-    DMA1->IFCR = status;
-    usb_cdc_port_rx_interrupt(1);
-}
-
 void DMA1_Channel7_IRQHandler() {
     (void)DMA1_Channel7_IRQHandler;
     uint32_t status = DMA1->ISR & ( DMA_ISR_TCIF7 );
     DMA1->IFCR = status;
     usb_cdc_port_tx_complete(1);
-}
-
-void DMA1_Channel3_IRQHandler() {
-    (void)DMA1_Channel3_IRQHandler;
-    uint32_t status = DMA1->ISR & ( DMA_ISR_TCIF3 | DMA_ISR_HTIF3);
-    DMA1->IFCR = status;
-    usb_cdc_port_rx_interrupt(2);
 }
 
 void DMA1_Channel2_IRQHandler() {
@@ -523,7 +502,7 @@ void DMA1_Channel2_IRQHandler() {
 /* USART Interrupt Handlers */
 
 __attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * usart,
-    volatile uint32_t *txa_bitband_clear, uint8_t dma_irqn) {
+    volatile uint32_t *txa_bitband_clear) {
     uint32_t wait_rxne = 0;
     uint32_t status = usart->SR;
     if (status & USART_SR_TC) {
@@ -535,26 +514,23 @@ __attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int 
         wait_rxne = 1;
         usb_cdc_states[port].serial_state |= USB_CDC_SERIAL_STATE_PARITY_ERROR;
     }
-    if (status & USART_SR_IDLE) {
-        NVIC_SetPendingIRQ(dma_irqn);
-    }
     while (wait_rxne && (usart->SR & USART_SR_RXNE));
     (void)usart->DR;
 }
 
 void USART1_IRQHandler() {
     (void)USART1_IRQHandler;
-    usb_cdc_usart_irq_handler(0, usb_cdc_port_usarts[0], usb_cdc_states[0].txa_bitband_clear, DMA1_Channel5_IRQn);
+    usb_cdc_usart_irq_handler(0, usb_cdc_port_usarts[0], usb_cdc_states[0].txa_bitband_clear);
 }
 
 void USART2_IRQHandler() {
     (void)USART2_IRQHandler;
-    usb_cdc_usart_irq_handler(1, usb_cdc_port_usarts[1], usb_cdc_states[1].txa_bitband_clear, DMA1_Channel6_IRQn);
+    usb_cdc_usart_irq_handler(1, usb_cdc_port_usarts[1], usb_cdc_states[1].txa_bitband_clear);
 }
 
 void USART3_IRQHandler() {
     (void)USART3_IRQHandler;
-    usb_cdc_usart_irq_handler(2, usb_cdc_port_usarts[2], usb_cdc_states[2].txa_bitband_clear, DMA1_Channel3_IRQn);
+    usb_cdc_usart_irq_handler(2, usb_cdc_port_usarts[2], usb_cdc_states[2].txa_bitband_clear);
 }
 
 /* Port Configuration & Control Lines Functions */
@@ -599,14 +575,8 @@ void usb_cdc_reset() {
     usb_cdc_enabled = 0;
     NVIC_SetPriority(DMA1_Channel2_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
     NVIC_EnableIRQ(DMA1_Channel2_IRQn);
-    NVIC_SetPriority(DMA1_Channel3_IRQn, SYSTEM_INTERRUTPS_PRIORITY_BASE);
-    NVIC_EnableIRQ(DMA1_Channel3_IRQn);
     NVIC_SetPriority(DMA1_Channel4_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
     NVIC_EnableIRQ(DMA1_Channel4_IRQn);
-    NVIC_SetPriority(DMA1_Channel5_IRQn, SYSTEM_INTERRUTPS_PRIORITY_BASE);
-    NVIC_EnableIRQ(DMA1_Channel5_IRQn);
-    NVIC_SetPriority(DMA1_Channel6_IRQn, SYSTEM_INTERRUTPS_PRIORITY_BASE);
-    NVIC_EnableIRQ(DMA1_Channel6_IRQn);
     NVIC_SetPriority(DMA1_Channel7_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
     NVIC_EnableIRQ(DMA1_Channel7_IRQn);
     /* 
@@ -641,7 +611,7 @@ void usb_cdc_reset() {
             usart->CR3 |= USART_CR3_CTSE;
         }
         usb_cdc_set_line_coding(port, &usb_cdc_default_line_coding, 0);
-        dma_rx_ch->CCR |= DMA_CCR_MINC | DMA_CCR_CIRC | DMA_CCR_TCIE | DMA_CCR_HTIE | DMA_CCR_PL_0;
+        dma_rx_ch->CCR |= DMA_CCR_MINC | DMA_CCR_CIRC | DMA_CCR_PL_0;
         dma_rx_ch->CPAR = (uint32_t)&usart->DR;
         dma_rx_ch->CMAR = (uint32_t)usb_cdc_states[port].rx_buf.data;
         dma_rx_ch->CNDTR = USB_CDC_BUF_SIZE;
@@ -783,6 +753,7 @@ void usb_cdc_poll() {
     for (int port = 0; port < (USB_CDC_NUM_PORTS); port++) {
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
         circ_buf_t *tx_buf = &cdc_state->tx_buf;
+        usb_cdc_sync_rx_buffer(port);
         usb_cdc_notify_port_state_change(port);
         usb_cdc_port_send_rx_usb(port);
         if (cdc_state->line_state_change_ready) {
