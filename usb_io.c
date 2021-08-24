@@ -53,6 +53,16 @@ void usb_io_reset() {
 }
 
 void usb_io_init() {
+    /* Force USB re-enumeration */
+    RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
+    GPIOA->CRH &= ~GPIO_CRH_CNF12;
+    GPIOA->CRH |= GPIO_CRH_MODE12_1;
+    for (int i=0; i<0xFFFF; i++) {
+        __NOP();
+    }
+    GPIOA->CRH &= ~GPIO_CRH_MODE12;
+    GPIOA->CRH |= GPIO_CRH_CNF12_0;
+    /* Initialize USB */
     NVIC_DisableIRQ(USB_LP_CAN1_RX0_IRQn);
     if (SystemCoreClock != RCC_MAX_FREQUENCY) {
         RCC->CFGR |= RCC_CFGR_USBPRE;
