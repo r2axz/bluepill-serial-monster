@@ -429,7 +429,7 @@ static void cdc_shell_gpio_print_config(int portnum, int pinnum) {
     const char *outtype = _cdc_uart_output_types[gc_pin->output];
     const char *pull = _cdc_uart_pull_types[gc_pin->pull];
     const char *val = gc_pin->val ? "1" : "0";
-    snprintf(buf, sizeof(buf), "%c%d: %s %s %s %s\r\n", portnum == 0 ? 'A' : 'B', pinnum, dir, outtype, pull, val);
+    snprintf(buf, sizeof(buf), "%c%d\t- %s %s %s %s\r\n", portnum == 0 ? 'A' : 'B', pinnum, dir, outtype, pull, val);
     cdc_shell_write_string(buf);
 }
 
@@ -459,32 +459,37 @@ static void cdc_shell_gpio_cmd_config(int argc, char *argv[]) {
         cdc_shell_write_string("Bad gpio.\r\n");
         return;
     }
-    argc--; argv++;
+    argc--;
+    argv++;
     gpio_control_pin_t *gc_pin = &device_config_get()->gpio_control.ports[portnum].pins[pinnum];
 
     gpio_control_pin_t new_pin = *gc_pin;
     while (argc >= 2) {
         if (strcmp(*argv, "dir") == 0) {
-            argc--; argv++;
+            argc--;
+            argv++;
             gpio_dir_t dir = _gpio_dir_by_name(*argv);
             if (dir != gpio_dir_unknown) {
                 new_pin.dir = dir;
             }
         } else if (strcmp(*argv, "output") == 0) {
-            argc--; argv++;
+            argc--;
+            argv++;
             gpio_output_t output = _cdc_uart_output_type_by_name(*argv);
             if (output != gpio_output_unknown) {
                 new_pin.output = output;
             }
         } else if (strcmp(*argv, "val") == 0) {
-            argc--; argv++;
+            argc--;
+            argv++;
             if ((*argv)[0] == '1') {
                 new_pin.val = 1;
             } else {
                 new_pin.val = 0;
             }
         } else if (strcmp(*argv, "pull") == 0) {
-            argc--; argv++;
+            argc--;
+            argv++;
             gpio_pull_t pull = _cdc_uart_pull_type_by_name(*argv);
             if (pull != gpio_pull_unknown) {
                 new_pin.pull = pull;
@@ -495,14 +500,14 @@ static void cdc_shell_gpio_cmd_config(int argc, char *argv[]) {
             cdc_shell_write_string(buf);
             return;
         }
-        argc--; argv++;
+        argc--;
+        argv++;
     }
     if (memcmp(&new_pin, gc_pin, sizeof(gpio_control_pin_t)) != 0) {
         *gc_pin = new_pin;
         gpio_control_reconfigure_pin(portnum, pinnum);
     }
     cdc_shell_gpio_print_config(portnum, pinnum);
-
 }
 
 static void cdc_shell_gpio_cmd_read(int argc, char *argv[]) {
@@ -530,7 +535,7 @@ static void cdc_shell_gpio_cmd_read(int argc, char *argv[]) {
 
 static void cdc_shell_gpio_cmd_write(int argc, char *argv[]) {
     int portnum, pinnum;
-    if (argc < 2) {
+    if (argc != 2) {
         cdc_shell_write_string("Bad arguments.\r\n");
         return;
     }
@@ -538,8 +543,7 @@ static void cdc_shell_gpio_cmd_write(int argc, char *argv[]) {
         cdc_shell_write_string("Bad gpio.\r\n");
         return;
     }
-    argc--; argv++;
-    if ((*argv)[0] == '0') {
+    if (argv[1][0] == '0') {
         gpio_control_write(portnum, pinnum, 0);
     } else {
         gpio_control_write(portnum, pinnum, 1);
@@ -645,7 +649,7 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
                           "  val\t[0|1] for output only\r\n"
                           "  pull\t\t[floating|up|down] for input only\r\n"
                           "Use \"gpio read all|pn pn+1 pn+2 ...\" to read state of pins\r\n"
-                          "Use \"gpio write pn 0|1 pn+1 [0|1] ...\" to set values of outputs\r\n"
+                          "Use \"gpio write pn 0|1\" to set state of an output\r\n"
     },
     { 0 }
 };

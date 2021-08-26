@@ -7,12 +7,6 @@
 #include "device_config.h"
 
 
-static inline int8_t _port_idx_by_address(GPIO_TypeDef *port) {
-    if (port == GPIOA) return 0;
-    if (port == GPIOB) return 1;
-    return -1;
-}
-
 static inline GPIO_TypeDef *_port_address_by_idx(int portnum) {
     if (portnum == 0) return GPIOA;
     if (portnum == 1) return GPIOB;
