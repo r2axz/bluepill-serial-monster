@@ -10,8 +10,6 @@
 #include "status_led.h"
 #include "device_config.h"
 #include "usb.h"
-#include "usb_cdc.h"
-
 
 int main() {
     system_clock_init();
