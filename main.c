@@ -21,6 +21,5 @@ int main() {
     usb_init();
     while (1) {
         usb_poll();
-        usb_cdc_poll();
     }
 }

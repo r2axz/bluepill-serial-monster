@@ -54,6 +54,10 @@ void usb_device_handle_frame() {
     usb_cdc_frame();
 }
 
+void usb_device_poll() {
+    usb_cdc_poll();
+}
+
 /* Device Descriptor Requests Handling */
 
 usb_status_t usb_control_endpoint_process_get_descriptor(usb_setup_t *setup,
