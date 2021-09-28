@@ -47,5 +47,6 @@ void usb_device_handle_configured();
 void usb_device_handle_suspend();
 void usb_device_handle_wakeup();
 void usb_device_handle_frame();
+void usb_device_poll();
 
 #endif /* USB_CORE_H */

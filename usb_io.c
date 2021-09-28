@@ -260,4 +260,5 @@ void usb_poll() {
         }
         usb_device_handle_frame();
     }
+    usb_device_poll();
 }
