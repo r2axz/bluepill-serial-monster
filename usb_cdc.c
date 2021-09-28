@@ -753,7 +753,7 @@ void usb_cdc_poll() {
     for (int port = 0; port < (USB_CDC_NUM_PORTS); port++) {
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
         circ_buf_t *tx_buf = &cdc_state->tx_buf;
-        if ((port != USB_CDC_CONFIG_PORT) && (usb_cdc_config_mode == 0)) {
+        if ((port != USB_CDC_CONFIG_PORT) || (usb_cdc_config_mode == 0)) {
             usb_cdc_sync_rx_buffer(port);
         }
         usb_cdc_notify_port_state_change(port);
