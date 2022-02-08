@@ -26,7 +26,7 @@ board works with your computer, don't bother fixing it.
 * 7 or 8 bit word length;
 * None, even, odd parity;
 * 1, 1.5, and 2 stop bits;
-* Works with _CDC Class_ drives on _Linux_, _OS X_, and _Windows_;
+* Works with _CDC Class_ drives on _Linux_, _macOS_, and _Windows_;
 * Supports all baud rates up to 2 MBaud;
 * **TXA** signal for controlling RS-485 transceivers (**DE**, **/RE**);
 * _DMA_ _RX_/_TX_ for high-speed communications;
@@ -105,6 +105,20 @@ by the host. Please take this behaviour into account if you rely on the
 **DSR**, **DCD**, and **RI** are polled 50 times per second.
 
 _UART DMA RX/TX_ buffer size is **1024** bytes.
+
+## Mapping Logical Port Names to Physical Ports
+
+Unfortunately, operating systems ignore CDC port names reported by the firmware.
+_Linux_ and _macOS_ tend to assign device numbers incrementally so that UART1 gets
+the lowest and UART3 the highest **/dev/ttyACM...** (Linux) or
+**/dev/tty.usbmodem...** (macOS) numbers. On the other hand, _Windows_ can get
+pretty creative when assigning COM port numbers to USB CDC devices.
+
+To find out which physical UART corresponds to a particular COM port on _Windows_,
+open **Device Manager**, right-click on the COM port under **Ports (COM & LPT)**,
+and choose **Properties**. Open the **Details** tab and select
+the **Bus reported device description** property.
+The **Value** field will indicate the physical UART name.
 
 ## Advanced Configuration
 
