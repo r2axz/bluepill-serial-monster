@@ -67,16 +67,22 @@ const usb_endpoint_t usb_endpoints[usb_endpoint_address_last] = {
     },
 };
 
-const usb_string_descriptor_t usb_string_lang            = USB_ARRAY_DESC(usb_language_code_en_US);
-const usb_string_descriptor_t usb_string_manufacturer    = USB_STRING_DESC("R2AXZ Kirill Kotyagin");
-const usb_string_descriptor_t usb_string_product         = USB_STRING_DESC("Bluepill Serial Monster");
-const usb_string_descriptor_t usb_string_serial          = USB_STRING_DESC("NO SERIAL"); /* Placeholder, replaced by STM32 UID */
+const usb_string_descriptor_t usb_string_lang                   = USB_ARRAY_DESC(usb_language_code_en_US);
+const usb_string_descriptor_t usb_string_manufacturer           = USB_STRING_DESC("R2AXZ Kirill Kotyagin");
+const usb_string_descriptor_t usb_string_product                = USB_STRING_DESC("Bluepill Serial Monster");
+const usb_string_descriptor_t usb_string_serial                 = USB_STRING_DESC("NO SERIAL"); /* Placeholder, replaced by STM32 UID */
+const usb_string_descriptor_t usb_string_uart_1_interface_name  = USB_STRING_DESC("UART1");
+const usb_string_descriptor_t usb_string_uart_2_interface_name  = USB_STRING_DESC("UART2");
+const usb_string_descriptor_t usb_string_uart_3_interface_name  = USB_STRING_DESC("UART3");
 
 const usb_string_descriptor_t *usb_string_descriptors[usb_string_index_last] = {
     &usb_string_lang,
     &usb_string_manufacturer,
     &usb_string_product,
     &usb_string_serial,
+    &usb_string_uart_1_interface_name,
+    &usb_string_uart_2_interface_name,
+    &usb_string_uart_3_interface_name,
 };
 
 const usb_device_descriptor_t usb_device_descriptor = {
@@ -126,7 +132,7 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bInterfaceClass        = usb_class_cdc,
         .bInterfaceSubClass     = usb_subclass_cdc_acm,
         .bInterfaceProtocol     = USB_PROTOCOL_CDC_DEFAULT,
-        .iInterface             = usb_string_index_none
+        .iInterface             = usb_string_index_uart_1_interface_name,
     },
     .cdc_hdr_0 = {
         .bFunctionLength        = sizeof(usb_configuration_descriptor.cdc_hdr_0),
@@ -208,7 +214,7 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bInterfaceClass        = usb_class_cdc,
         .bInterfaceSubClass     = usb_subclass_cdc_acm,
         .bInterfaceProtocol     = USB_PROTOCOL_CDC_DEFAULT,
-        .iInterface             = usb_string_index_none
+        .iInterface             = usb_string_index_uart_2_interface_name,
     },
     .cdc_hdr_1 = {
         .bFunctionLength        = sizeof(usb_configuration_descriptor.cdc_hdr_1),
@@ -290,7 +296,7 @@ const usb_device_configuration_descriptor_t usb_configuration_descriptor = {
         .bInterfaceClass        = usb_class_cdc,
         .bInterfaceSubClass     = usb_subclass_cdc_acm,
         .bInterfaceProtocol     = USB_PROTOCOL_CDC_DEFAULT,
-        .iInterface             = usb_string_index_none
+        .iInterface             = usb_string_index_uart_3_interface_name,
     },
     .cdc_hdr_2 = {
         .bFunctionLength        = sizeof(usb_configuration_descriptor.cdc_hdr_2),
