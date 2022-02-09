@@ -25,6 +25,9 @@ typedef enum {
     usb_string_index_manufacturer,
     usb_string_index_product,
     usb_string_index_serial,
+    usb_string_index_uart_1_interface_name,
+    usb_string_index_uart_2_interface_name,
+    usb_string_index_uart_3_interface_name,
     usb_string_index_last,
 } __attribute__ ((packed)) usb_string_index_t;
 
