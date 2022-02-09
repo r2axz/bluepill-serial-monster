@@ -440,7 +440,7 @@ By default, _bluepill-serial-monster_ firmware starts at flash origin (0x8000000
 To move the firmware to a custom address, use the **FIRMWARE_ORIGIN** Makefile variable:
 
 ```bash
-make clean && make FIRMWARE_ORIGIN=<0xXXXXXXXX>
+make clean && make FIRMWARE_ORIGIN=0xXXXXXXXX
 ```
 
 where 0xXXXXXXXX is the required firmware start address.
