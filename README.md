@@ -110,15 +110,25 @@ _UART DMA RX/TX_ buffer size is **1024** bytes.
 
 Unfortunately, operating systems ignore CDC port names reported by the firmware.
 _Linux_ and _macOS_ tend to assign device numbers incrementally so that UART1 gets
-the lowest and UART3 the highest **/dev/ttyACM...** (Linux) or
-**/dev/tty.usbmodem...** (macOS) numbers. On the other hand, _Windows_ can get
+the lowest and UART3 the highest **/dev/ttyACM...** (_Linux_) or
+**/dev/tty.usbmodem...** (_macOS_) numbers. On the other hand, _Windows_ can get
 pretty creative when assigning COM port numbers to USB CDC devices.
 
 To find out which physical UART corresponds to a particular COM port on _Windows_,
-open **Device Manager**, right-click on the COM port under **Ports (COM & LPT)**,
+open **Device Manager**, right click on the COM port under **Ports (COM & LPT)**,
 and choose **Properties**. Open the **Details** tab and select
 the **Bus reported device description** property.
 The **Value** field will indicate the physical UART name.
+
+## Windows Usbser.sys RTS Bug
+
+All versions of _Windows_ have a bug in the USB CDC system driver (usbser.sys)
+that affects RTS signal handling.
+
+The driver does not send USB **SET_CONTROL_LINE_STATE** messages when
+the **RTS** state changes. However, on the **DTR** state change, the driver sends
+a **SET_CONTROL_LINE_STATE** message containing the updated states for both
+**RTS** and **DTR** signals.
 
 ## Advanced Configuration
 
