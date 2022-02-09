@@ -110,15 +110,66 @@ _UART DMA RX/TX_ buffer size is **1024** bytes.
 
 Unfortunately, operating systems ignore CDC port names reported by the firmware.
 _Linux_ and _macOS_ tend to assign device numbers incrementally so that UART1 gets
-the lowest and UART3 the highest **/dev/ttyACM...** (Linux) or
-**/dev/tty.usbmodem...** (macOS) numbers. On the other hand, _Windows_ can get
+the lowest and UART3 the highest **/dev/ttyACM...** (_Linux_) or
+**/dev/tty.usbmodem...** (_macOS_) numbers. On the other hand, _Windows_ can get
 pretty creative when assigning COM port numbers to USB CDC devices.
 
 To find out which physical UART corresponds to a particular COM port on _Windows_,
-open **Device Manager**, right-click on the COM port under **Ports (COM & LPT)**,
+open **Device Manager**, right click on the COM port under **Ports (COM & LPT)**,
 and choose **Properties**. Open the **Details** tab and select
 the **Bus reported device description** property.
 The **Value** field will indicate the physical UART name.
+
+## Windows Usbser.sys RTS Bug
+
+All versions of _Windows_ have a bug in the USB CDC system driver (**usbser.sys**)
+that affects RTS signal handling.
+
+The driver does not send USB **SET_CONTROL_LINE_STATE** messages when
+the **RTS** state changes. However, on the **DTR** state change, the driver sends
+a **SET_CONTROL_LINE_STATE** message containing the updated states for both
+**RTS** and **DTR** signals.
+
+It is unknown why **usbser.sys** does this, but the disassembled code
+of the driver suggests that sending **SET_CONTROL_LINE_STATE** on **RTS** change
+is simply left out by mistake. It looks like _Microsoft_ is not going to fix
+this bug. However, it can be easily worked around.
+
+The workaround for this bug is to update DTR (even to the same state) each time
+RTS needs to be updated as in the example below:
+
+```c
+#include <windows.h>
+#include <stdio.h>
+
+int main() {
+    HANDLE hComm = CreateFileA("\\\\.\\COM5", GENERIC_READ | GENERIC_WRITE,
+        0, NULL, OPEN_EXISTING, 0, NULL);
+    if (hComm == INVALID_HANDLE_VALUE) {
+        printf("Error opening serial port\n");
+    } else {
+        printf("Serial port opened\n");
+    }
+    while (1) {
+        // I don't know any easy (and reliable) way to get current DTR state in WinAPI unfortunately.
+        // Probably the simplest solution is to keep current DTR value in a variable.
+        EscapeCommFunction(hComm, SETRTS);
+        EscapeCommFunction(hComm, CLRDTR); // or SETDTR, does not matter
+        (void)getc(stdin);
+        EscapeCommFunction(hComm, CLRRTS);
+        EscapeCommFunction(hComm, CLRDTR); // or SETDTR, does not matter
+        (void)getc(stdin);
+    }
+    CloseHandle(hComm);
+    return 0;
+}
+```
+
+Some existing software already does that. _CwType_, _Win-Test_, _CoolTerm_
+are the examples of such software. Others like _N1MM Logger Plus_ or _Termite_
+do not implement the workaround.
+
+The RTS issue does not affect _Linux_ or _macOS_.
 
 ## Advanced Configuration
 
