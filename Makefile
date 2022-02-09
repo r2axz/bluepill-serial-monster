@@ -40,6 +40,10 @@ OBJS		+= $(SRCS:%.c=$(BUILD_DIR)/%.o)
 OBJS		+= $(STM32_SYSINIT:%.c=$(BUILD_DIR)/%.o)
 STARTUP		+= $(STM32_STARTUP:%.s=$(BUILD_DIR)/%.o)
 
+ifneq ($(FIRMWARE_ORIGIN),)
+LDFLAGS		+= -Wl,-section-start=.isr_vector=$(FIRMWARE_ORIGIN)
+endif
+
 .PHONY: all
 all: $(TARGET).hex $(TARGET).bin size
 

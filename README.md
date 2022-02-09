@@ -34,6 +34,7 @@ board works with your computer, don't bother fixing it.
 * Signed _INF_ driver for _Windows XP, 7, and 8_;
 * Built-in command shell for device parameters configuration;
 * No external dependencies other than _CMSIS_;
+* DFU Bootloaders Compartible (see the _FIRMWARE_ORIGIN_ option);
 
 (1) _UART1_ does not support _CTS_ because it is occupied by USB (_PA11_)
 and cannot be remapped. _RTS_ can still be used.
@@ -330,9 +331,11 @@ or similar programmer.
 st-flash --format ihex write bluepill-serial-monster.hex
 ```
 
-You can also flash _STM32F103C8T6_ via a built-in serial bootloader. Visit
+It is also possible to flash _STM32F103C8T6_ via a built-in serial bootloader. Visit
 [https://www.st.com/en/development-tools/flasher-stm32.html](https://www.st.com/en/development-tools/flasher-stm32.html)
 for instructions and software.
+
+You can also use _bluepill-serial-monster-stm32duino-0x8002000.bin_ or _bluepill-serial-monster-stm32duino-0x8005000.bin_ with [STM32duino-bootloader](https://github.com/rogerclarkmelbourne/STM32duino-bootloader) and [dfu-util](http://dfu-util.sourceforge.net).
 
 ## Windows Driver (WinXP, 7, 8)
 
@@ -427,3 +430,20 @@ To remove object, dependency, and firmware files, run
 ```bash
 make distclean
 ```
+
+### Building for DFU Bootloaders
+
+_DFU_ bootloaders generally require the firmware origin to be relocated
+to a higher flash address to allow room for the bootloader itself.
+The bootloader documentation should specify the firmware upload address.
+By default, _bluepill-serial-monster_ firmware starts at flash origin (0x8000000).
+To move the firmware to a custom address, use the **FIRMWARE_ORIGIN** Makefile variable:
+
+```bash
+make clean && make FIRMWARE_ORIGIN=0xXXXXXXXX
+```
+
+where 0xXXXXXXXX is the required firmware start address.
+
+The firmware release package already includes two prebuilt binaries for use with
+[STM32duino-bootloader](https://github.com/rogerclarkmelbourne/STM32duino-bootloader).

@@ -21,8 +21,20 @@ jobs:
       run: git clone https://github.com/STMicroelectronics/STM32CubeF1.git
     - name: Run Cppcheck
       run: STM32CUBE_PATH=./STM32CubeF1 make cppcheck
-    - name: Build Firmware
-      run: STM32CUBE_PATH=./STM32CubeF1 make
+    - name: Build Firmware (STM32duino 0x8002000)
+      run: |
+        make clean && \
+        STM32CUBE_PATH=./STM32CubeF1 FIRMWARE_ORIGIN=0x8002000 make && \
+        mv bluepill-serial-monster.bin bluepill-serial-monster-stm32duino-0x8002000.bin &&\
+        mv bluepill-serial-monster.hex bluepill-serial-monster-stm32duino-0x8002000.hex
+    - name: Build Firmware (STM32duino 0x8005000)
+      run: |
+        make clean && \
+        STM32CUBE_PATH=./STM32CubeF1 FIRMWARE_ORIGIN=0x8005000 make && \
+        mv bluepill-serial-monster.bin bluepill-serial-monster-stm32duino-0x8005000.bin &&\
+        mv bluepill-serial-monster.hex bluepill-serial-monster-stm32duino-0x8005000.hex
+    - name: Build Firmware (Bare)
+      run: make clean && STM32CUBE_PATH=./STM32CubeF1 make
     - name: Archive Artifacts
       uses: actions/upload-artifact@v2
       with:
