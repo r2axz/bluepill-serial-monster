@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "cdc_config.h"
 #include "device_config.h"
+#include "version.h"
 #include "cdc_shell.h"
 
 
@@ -349,6 +350,13 @@ static void cdc_shell_cmd_config(int argc, char *argv[]) {
     cdc_shell_write_string(cdc_shell_err_config_missing_arguments);
 }
 
+static const char cdc_shell_device_version[]            = DEVICE_VERSION_STRING;
+
+static void cdc_shell_cmd_version(int argc, char *argv[]) {
+    cdc_shell_write_string(cdc_shell_device_version);
+    cdc_shell_write_string(cdc_shell_new_line);
+}
+
 static void cdc_shell_cmd_help(int argc, char *argv[]);
 
 static const cdc_shell_cmd_t cdc_shell_commands[] = {
@@ -379,7 +387,13 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
                           "  active\t[low|high]\r\n"
                           "  pull\t\t[floating|up|down]\r\n"
                           "Example: \"uart 1 tx output od\" sets UART1 TX output type to open-drain\r\n"
-                          "Example: \"uart 3 rts active high dcd active high pull down\" allows to set multiple parameters at once."
+                          "Example: \"uart 3 rts active high dcd active high pull down\" allows to set multiple parameters at once.",
+    },
+    {
+        .cmd            = "version",
+        .handler        = cdc_shell_cmd_version,
+        .description    = "print firmware version",
+        .usage          = "Usage: version",
     },
     { 0 }
 };

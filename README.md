@@ -192,8 +192,6 @@ a sequence of configuration shell commands. When _screen_ or another terminal
 emulation software is started, its output may contain garbage characters left
 due to the above exchange.
 
-
-
 ## Advanced Configuration
 
 _bluepill-serial-monster_ provides a configuration shell that allows
@@ -337,6 +335,14 @@ To reset the device to the default settings, type:
 
 ```text
 config reset
+```
+
+### Printing the Firmware Version
+
+To print the firmware version, type:
+
+```text
+version
 ```
 
 The default configuration is automatically stored in the flash memory after reset.

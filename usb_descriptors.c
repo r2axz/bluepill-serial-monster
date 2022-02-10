@@ -6,6 +6,7 @@
 
 #include "usb_core.h"
 #include "usb_cdc.h"
+#include "version.h"
 #include "usb_descriptors.h"
 
 #define USB_CONTROL_ENDPOINT_SIZE           16
@@ -95,7 +96,7 @@ const usb_device_descriptor_t usb_device_descriptor = {
     .bMaxPacketSize     = usb_endpoints[usb_endpoint_address_control].rx_size,
     .idVendor           = USB_ID_VENDOR,
     .idProduct          = USB_ID_PRODUCT,
-    .bcdDevice          = USB_BCD_VERSION(1, 0, 0),
+    .bcdDevice          = USB_BCD_VERSION(DEVICE_VERSION_MAJOR, DEVICE_VERSION_MINOR, DEVICE_VERSION_REVISION),
     .iManufacturer      = usb_string_index_manufacturer,
     .iProduct           = usb_string_index_product,
     .iSerialNumber      = usb_string_index_serial,
