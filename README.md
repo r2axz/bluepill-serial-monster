@@ -172,6 +172,28 @@ do not implement the workaround.
 
 The RTS issue does not affect _Linux_ or _macOS_.
 
+## Unexpected Echo or Garbage Characters in Linux
+
+_Linux_ terminal subsystem echoes characters coming from a
+_bluepill-serial-monster_ port back to this port until it is switched to
+the raw more (see ```man 3 cfmakeraw```).
+
+This behaviour is Linux-specific and is not related to
+_bluepill-serial-monster_ itself. See
+[this Stack Overflow post](https://stackoverflow.com/questions/14866899/linux-cdc-acm-device-unexpected-characters-sent-to-device)
+for details.
+
+Usually, this is not an issue; however, it may lead to garbage characters
+appearing when the configuration shell is started. For instance, if **PA5**
+is tied to the ground when _bluepill-serial-monster_ is plugged in, the device
+sends the configuration mode banner to the host. The host echoes the content of
+the banner back to the device, which in turn tries to parse it as if it was
+a sequence of configuration shell commands. When _screen_ or another terminal
+emulation software is started, its output may contain garbage characters left
+due to the above exchange.
+
+
+
 ## Advanced Configuration
 
 _bluepill-serial-monster_ provides a configuration shell that allows
