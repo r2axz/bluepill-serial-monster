@@ -44,6 +44,23 @@ ifneq ($(FIRMWARE_ORIGIN),)
 LDFLAGS		+= -Wl,-section-start=.isr_vector=$(FIRMWARE_ORIGIN)
 endif
 
+GIT_VERSION	:= $(subst ., ,$(subst v,,$(shell git describe --tags 2>/dev/null || true)))
+
+ifneq ($(GIT_VERSION),)
+GIT_VERSION_MAJOR 	:= $(word 1, $(GIT_VERSION))
+ifneq ($(GIT_VERSION_MAJOR),)
+CFLAGS			+= -DDEVICE_VERSION_MAJOR=$(GIT_VERSION_MAJOR)
+endif
+GIT_VERSION_MINOR 	:= $(word 2, $(GIT_VERSION))
+ifneq ($(GIT_VERSION_MINOR),)
+CFLAGS			+= -DDEVICE_VERSION_MINOR=$(GIT_VERSION_MINOR)
+endif
+GIT_VERSION_REVISION	:= $(word 3, $(GIT_VERSION))
+ifneq ($(GIT_VERSION_REVISION),)
+CFLAGS			+= -DDEVICE_VERSION_REVISION=$(GIT_VERSION_REVISION)
+endif
+endif
+
 .PHONY: all
 all: $(TARGET).hex $(TARGET).bin size
 
