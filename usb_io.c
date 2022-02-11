@@ -115,11 +115,12 @@ size_t usb_send(uint8_t ep_num, const void *buf, size_t count) {
     ep_reg_t *ep_reg = ep_regs(ep_num);
     usb_pbuffer_data_t *ep_buf = (usb_pbuffer_data_t *)(USB_PMAADDR + (usb_btable[ep_num].tx_offset<<1));
     pb_word_t *buf_p = (pb_word_t*)buf;
-    pb_word_t words_left  = count >> 1;
+    pb_word_t words_left;
     size_t tx_space_available = usb_endpoints[ep_num].tx_size;
     if (count > tx_space_available) {
         count = tx_space_available;
     }
+    words_left = count >> 1;
     while (words_left--) {
         (ep_buf++)->data = *buf_p++;
     }
@@ -130,6 +131,7 @@ size_t usb_send(uint8_t ep_num, const void *buf, size_t count) {
     *ep_reg = ((*ep_reg ^ USB_EP_TX_VALID) & (USB_EPREG_MASK | USB_EPTX_STAT)) | (USB_EP_CTR_RX | USB_EP_CTR_TX);
     return count;
 }
+
 
 /* Circular Buffer Read/Write Operations */
 
