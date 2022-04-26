@@ -44,7 +44,7 @@ ifneq ($(FIRMWARE_ORIGIN),)
 LDFLAGS		+= -Wl,-section-start=.isr_vector=$(FIRMWARE_ORIGIN)
 endif
 
-GIT_VERSION	:= $(subst ., ,$(subst v,,$(shell git describe --abbrev=0 --tags 2>/dev/null || true)))
+GIT_VERSION	:= $(subst ., ,$(subst v,,$(shell git describe --abbrev=0 --tags --match "v*" 2>/dev/null || true)))
 
 ifneq ($(GIT_VERSION),)
 GIT_VERSION_MAJOR 	:= $(word 1, $(GIT_VERSION))
