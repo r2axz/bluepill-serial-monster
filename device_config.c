@@ -18,7 +18,7 @@
 
 static const device_config_t default_device_config = {
     .status_led_pin = { .port = GPIOC, .pin = 13, .dir = gpio_dir_output, .speed = gpio_speed_low, .func = gpio_func_general, .output = gpio_output_od, .polarity = gpio_polarity_low },
-    .config_pin = { .port = GPIOB, .pin = 5, .dir = gpio_dir_input, .pull = gpio_pull_up, .polarity = gpio_polarity_low },
+    .config_pin = { .port = GPIOB, .pin = 5, .dir = gpio_dir_input, .pull = gpio_pull_up, .polarity = gpio_polarity_high },
     .cdc_config = {
         .port_config = {
             /*  Port 0 */
