@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -37,7 +37,7 @@ void usb_control_endpoint_event_handler(uint8_t ep_num, usb_endpoint_event_t ep_
 typedef enum {
     usb_device_state_reset          = 0x00,
     usb_device_state_address_set    = 0x01,
-    usb_device_state_configured     = 0x02,    
+    usb_device_state_configured     = 0x02,
 } usb_device_state_t;
 
 /* Device Level Events */

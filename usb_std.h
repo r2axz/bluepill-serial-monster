@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -119,7 +119,7 @@ typedef struct  {
 /* USB Interface Descriptor */
 
 typedef struct {
-    uint8_t bLength; 
+    uint8_t bLength;
     uint8_t bDescriptorType;
     uint8_t bInterfaceNumber;
     uint8_t bAlternateSetting;

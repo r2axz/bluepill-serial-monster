@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -26,7 +26,7 @@ static uint8_t usb_cdc_config_mode = 0;
 
 static const usb_cdc_line_coding_t usb_cdc_default_line_coding = {
     .dwDTERate      = 9600,
-    .bCharFormat    = usb_cdc_char_format_1_stop_bit, 
+    .bCharFormat    = usb_cdc_char_format_1_stop_bit,
     .bParityType    = usb_cdc_parity_type_none,
     .bDataBits      = 8,
 };
@@ -77,11 +77,11 @@ static DMA_Channel_TypeDef* usb_cdc_get_port_dma_channel(int port, usb_cdc_port_
         { DMA1_Channel6,  DMA1_Channel7 },
         { DMA1_Channel3,  DMA1_Channel2 },
     };
-    if (port < (sizeof(port_dma_channels) / sizeof(*port_dma_channels)) && 
+    if (port < (sizeof(port_dma_channels) / sizeof(*port_dma_channels)) &&
         port_dir < usb_cdc_port_direction_last) {
         return port_dma_channels[port][port_dir];
     }
-    return (DMA_Channel_TypeDef*)0; 
+    return (DMA_Channel_TypeDef*)0;
 }
 
 static uint8_t const usb_cdc_port_data_endpoints[] = {
@@ -579,7 +579,7 @@ void usb_cdc_reset() {
     NVIC_EnableIRQ(DMA1_Channel4_IRQn);
     NVIC_SetPriority(DMA1_Channel7_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
     NVIC_EnableIRQ(DMA1_Channel7_IRQn);
-    /* 
+    /*
      * Disable JTAG interface (SWD is still enabled),
      * this frees PA15, PB3, PB4 (needed for DSR/RI inputs).
      */
@@ -720,7 +720,7 @@ usb_status_t usb_cdc_ctrl_process_request(usb_setup_t *setup, void **payload,
                 if (setup->wLength == sizeof(usb_cdc_line_coding_t)) {
                     int dry_run = 0;
                     circ_buf_t *tx_buf = &usb_cdc_states[port].tx_buf;
-                    /* 
+                    /*
                      * If the TX buffer is not empty, defer setting
                      * line coding until all data are sent over the serial port.
                      */

@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -323,7 +323,7 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
         }
     } else {
         cdc_shell_write_string(cdc_shell_err_uart_missing_arguments);
-    } 
+    }
 }
 
 
@@ -360,7 +360,7 @@ static void cdc_shell_cmd_version(int argc, char *argv[]) {
 static void cdc_shell_cmd_help(int argc, char *argv[]);
 
 static const cdc_shell_cmd_t cdc_shell_commands[] = {
-    { 
+    {
         .cmd            = "help",
         .handler        = cdc_shell_cmd_help,
         .description    = "shows this help message, use \"help command-name\" to get command-specific help",
@@ -374,7 +374,7 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
                           "Use: \"config save\" to permanently save device configuration.\r\n"
                           "Use: \"config reset\" to reset device configuration to default.",
     },
-    { 
+    {
         .cmd            = "uart",
         .handler        = cdc_shell_cmd_uart,
         .description    = "set and view UART parameters",

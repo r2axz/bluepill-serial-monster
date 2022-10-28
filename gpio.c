@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -51,7 +51,7 @@ void gpio_pin_init(const gpio_pin_t *pin) {
 
 void gpio_pin_set(const gpio_pin_t *pin, int is_active) {
     if (pin->port) {
-        pin->port->BSRR = (GPIO_BSRR_BS0 << pin->pin) 
+        pin->port->BSRR = (GPIO_BSRR_BS0 << pin->pin)
             << (!!is_active != (pin->polarity == gpio_polarity_low) ? 0 : GPIO_BSRR_BR0_Pos);
     }
 }
