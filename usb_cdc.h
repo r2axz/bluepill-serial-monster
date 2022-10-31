@@ -192,7 +192,6 @@ typedef enum {
     cdc_pin_last = cdc_pin_unknown,
 } __packed cdc_pin_t;
 
-
 /* Configuration Changed Hooks */
 
 void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin);

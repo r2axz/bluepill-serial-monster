@@ -70,6 +70,7 @@ static const char cdc_shell_err_uart_invalid_pull_type[]            = "Error, in
 static const char cdc_shell_err_cannot_set_output_type_for_input[]  = "Error, cannot set output type for input pin.\r\n";
 static const char cdc_shell_err_cannot_change_polarity[]            = "Error, cannot change polarity of alternate function pins.\r\n";
 static const char cdc_shell_err_cannot_set_pull_for_output[]        = "Error, cannot pull type for output pin.\r\n";
+static const char cdc_shell_err_pin_is_detached[]                   = "Error, pin is detached.\r\n";
 
 
 static const char *_cdc_uart_signal_names[cdc_pin_last] = {
@@ -145,11 +146,12 @@ static void cdc_shell_cmd_uart_show(int port) {
         cdc_shell_write_string(colon_str);
         cdc_shell_write_string(cdc_shell_new_line);
         for (cdc_pin_t pin = 0; pin < cdc_pin_last; pin++) {
-            const gpio_pin_t *cdc_pin = &cdc_port->pins[pin];
+            const gpio_pin_t *cdc_pin = gpion_to_gpio(cdc_port->pins[pin]);
+            gpio_hal_t hal = gpion_to_hal(cdc_port->pins[pin]);
             const char *pin_name = _cdc_uart_signal_names[pin];
             cdc_shell_write_string(pin_name);
             cdc_shell_write_string(cdc_shell_delim);
-            if (cdc_pin->port) {
+            if (cdc_pin && hal.port) {
                 const char *active_value = _cdc_uart_polarities[cdc_pin->polarity];
                 if (cdc_pin->dir == gpio_dir_input) {
                     cdc_shell_write_string(in_str);
@@ -180,8 +182,10 @@ static int cdc_shell_cmd_uart_set_output_type(int port, cdc_pin_t uart_pin, gpio
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
-        gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
-        if (pin->dir == gpio_dir_output) {
+        gpio_pin_t *pin = gpion_to_gpio(device_config_get()->cdc_config.port_config[port_index].pins[uart_pin]);
+        if (pin == 0) {
+            cdc_shell_write_string(cdc_shell_err_pin_is_detached);
+        } else if (pin->dir == gpio_dir_output) {
             pin->output = output;
             usb_cdc_reconfigure_port_pin(port, uart_pin);
         } else {
@@ -196,7 +200,7 @@ static int cdc_shell_cmd_uart_set_polarity(int port, cdc_pin_t uart_pin, gpio_po
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
-        gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
+        gpio_pin_t *pin = gpion_to_gpio(device_config_get()->cdc_config.port_config[port_index].pins[uart_pin]);
         if (pin->func == gpio_func_general && (uart_pin != cdc_pin_rx) && (uart_pin != cdc_pin_cts)) {
             pin->polarity = polarity;
             usb_cdc_reconfigure_port_pin(port, uart_pin);
@@ -212,7 +216,7 @@ static int cdc_shell_cmd_uart_set_pull_type(int port, cdc_pin_t uart_pin, gpio_p
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
              port_index++) {
-        gpio_pin_t *pin = &device_config_get()->cdc_config.port_config[port_index].pins[uart_pin];
+        gpio_pin_t *pin = gpion_to_gpio(device_config_get()->cdc_config.port_config[port_index].pins[uart_pin]);
         if (pin->dir == gpio_dir_input) {
             pin->pull = pull;
             usb_cdc_reconfigure_port_pin(port, uart_pin);
@@ -352,6 +356,8 @@ static void cdc_shell_cmd_config(int argc, char *argv[]) {
 static const char cdc_shell_device_version[]            = DEVICE_VERSION_STRING;
 
 static void cdc_shell_cmd_version(int argc, char *argv[]) {
+    (void) argc;
+    (void) argv;
     cdc_shell_write_string(cdc_shell_device_version);
     cdc_shell_write_string(cdc_shell_new_line);
 }

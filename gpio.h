@@ -56,16 +56,28 @@ typedef enum {
      gpio_speed_last = gpio_speed_unknown
 } __packed gpio_speed_t;
 
+typedef enum {
+     gpio_status_free,
+     gpio_status_occupied,
+     gpio_status_blocked,
+     gpio_status_unknown,
+     gpio_status_last = gpio_status_unknown,
+} gpio_status_t;
+
 typedef struct {
-    GPIO_TypeDef*       port;
-    uint8_t             pin;
     gpio_dir_t          dir;
     gpio_func_t         func;
     gpio_output_t       output;
     gpio_pull_t         pull;
     gpio_polarity_t     polarity;
     gpio_speed_t        speed;
-} __packed gpio_pin_t;
+    gpio_status_t       status;
+} gpio_pin_t;
+
+typedef struct {
+    GPIO_TypeDef *port;
+    int pin;
+} gpio_hal_t;
 
 void gpio_pin_init(const gpio_pin_t *pin);
 
@@ -73,5 +85,7 @@ void gpio_pin_set(const gpio_pin_t *pin, int is_active);
 int  gpio_pin_get(const gpio_pin_t *pin);
 
 volatile uint32_t *gpio_pin_get_bitband_clear_addr(const gpio_pin_t *pin);
+
+gpio_hal_t gpio_to_hal(const gpio_pin_t *pin);
 
 #endif /* GPIO_G */
