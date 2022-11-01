@@ -38,8 +38,7 @@ typedef struct {
 
 /* Shell Helper Functions */
 
-__attribute__ ((noinline))
-static void cdc_shell_write_string(const char *buf) {
+__noinline static void cdc_shell_write_string(const char *buf) {
     cdc_shell_write(buf, strlen(buf));
 }
 
@@ -78,7 +77,7 @@ static const char *_cdc_uart_signal_names[cdc_pin_last] = {
 };
 
 static cdc_pin_t _cdc_uart_signal_by_name(char *name) {
-    for (int i = 0; i < sizeof(_cdc_uart_signal_names)/sizeof(*_cdc_uart_signal_names); i++) {
+    for (int i = 0; i < ARRAY_SIZE(_cdc_uart_signal_names); i++) {
         if (strcmp(name, _cdc_uart_signal_names[i]) == 0) {
             return (cdc_pin_t)i;
         }
@@ -91,7 +90,7 @@ static const char *_cdc_uart_output_types[gpio_output_last] = {
 };
 
 static gpio_output_t _cdc_uart_output_type_by_name(char *name) {
-    for (int i = 0; i< sizeof(_cdc_uart_output_types)/sizeof(*_cdc_uart_output_types); i++) {
+    for (int i = 0; i < ARRAY_SIZE(_cdc_uart_output_types); i++) {
         if (strcmp(name, _cdc_uart_output_types[i]) == 0) {
             return (gpio_output_t)i;
         }
@@ -104,7 +103,7 @@ static const char *_cdc_uart_polarities[gpio_polarity_last] = {
 };
 
 static gpio_polarity_t _cdc_uart_polarity_by_name(char *name) {
-    for (int i = 0; i< sizeof(_cdc_uart_polarities)/sizeof(*_cdc_uart_polarities); i++) {
+    for (int i = 0; i < ARRAY_SIZE(_cdc_uart_polarities); i++) {
         if (strcmp(name, _cdc_uart_polarities[i]) == 0) {
             return (gpio_polarity_t)i;
         }
@@ -117,7 +116,7 @@ static const char *_cdc_uart_pull_types[gpio_pull_last] = {
 };
 
 static gpio_pull_t _cdc_uart_pull_type_by_name(char *name) {
-    for (int i = 0; i< sizeof(_cdc_uart_pull_types)/sizeof(*_cdc_uart_pull_types); i++) {
+    for (int i = 0; i < ARRAY_SIZE(_cdc_uart_pull_types); i++) {
         if (strcmp(name, _cdc_uart_pull_types[i]) == 0) {
             return (gpio_pull_t)i;
         }
@@ -591,7 +590,7 @@ void cdc_shell_process_input(const void *buf, size_t count) {
                 cdc_shell_handle_backspace();
             } else if (isprint(*(unsigned char *)(buf_p))) {
                 cdc_shell_insert_symbol(*buf_p);
-                if ((cmd_line_cursor - cmd_line_buf) >= sizeof(cmd_line_buf)/sizeof(*cmd_line_buf)) {
+                if ((cmd_line_cursor - cmd_line_buf) >= ARRAY_SIZE(cmd_line_buf)) {
                     cdc_shell_clear_cmd_buf();
                     cdc_shell_write_string(cdc_shell_new_line);
                     cdc_shell_write_string(cdc_shell_err_too_long);

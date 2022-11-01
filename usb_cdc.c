@@ -59,7 +59,7 @@ static USART_TypeDef* const usb_cdc_port_usarts[] = {
 };
 
 static USART_TypeDef* usb_cdc_get_port_usart(int port) {
-    if (port < (sizeof(usb_cdc_port_usarts) / sizeof(*usb_cdc_port_usarts))){
+    if (port < ARRAY_SIZE(usb_cdc_port_usarts)){
         return usb_cdc_port_usarts[port];
     }
     return (USART_TypeDef*)0;
@@ -77,7 +77,7 @@ static DMA_Channel_TypeDef* usb_cdc_get_port_dma_channel(int port, usb_cdc_port_
         { DMA1_Channel6,  DMA1_Channel7 },
         { DMA1_Channel3,  DMA1_Channel2 },
     };
-    if (port < (sizeof(port_dma_channels) / sizeof(*port_dma_channels)) &&
+    if (port < ARRAY_SIZE(port_dma_channels) &&
         port_dir < usb_cdc_port_direction_last) {
         return port_dma_channels[port][port_dir];
     }
@@ -91,14 +91,14 @@ static uint8_t const usb_cdc_port_data_endpoints[] = {
 };
 
 static uint8_t usb_cdc_get_port_data_ep(int port) {
-    if (port < (sizeof(usb_cdc_port_data_endpoints) / sizeof(*usb_cdc_port_data_endpoints))) {
+    if (port < ARRAY_SIZE(usb_cdc_port_data_endpoints)) {
         return usb_cdc_port_data_endpoints[port];
     }
     return -1;
 }
 
 static int usb_cdc_data_endpoint_port(uint8_t ep_num) {
-    for (int port = 0; port < (sizeof(usb_cdc_port_data_endpoints) / sizeof(*usb_cdc_port_data_endpoints)); port++) {
+    for (int port = 0; port < ARRAY_SIZE(usb_cdc_port_data_endpoints); port++) {
         if (usb_cdc_port_data_endpoints[port] == ep_num) {
             return port;
         }
@@ -113,7 +113,7 @@ static uint8_t const usb_cdc_port_interrupt_endpoints[] = {
 };
 
 static uint8_t usb_cdc_get_port_notification_ep(int port) {
-    if (port < (sizeof(usb_cdc_port_interrupt_endpoints) / sizeof(*usb_cdc_port_interrupt_endpoints))) {
+    if (port < ARRAY_SIZE(usb_cdc_port_interrupt_endpoints)) {
         return usb_cdc_port_interrupt_endpoints[port];
     }
     return -1;
@@ -124,14 +124,14 @@ static uint8_t const usb_cdc_port_interfaces[] = {
 };
 
 static int usb_cdc_get_port_interface(int port) {
-    if (port < (sizeof(usb_cdc_port_interfaces) / sizeof(*usb_cdc_port_interfaces))) {
+    if (port < ARRAY_SIZE(usb_cdc_port_interfaces)) {
         return usb_cdc_port_interfaces[port];
     }
     return -1;
 }
 
 static int usb_cdc_get_interface_port(uint8_t if_num) {
-    for (int port = 0; port < (sizeof(usb_cdc_port_interfaces) / sizeof(*usb_cdc_port_interfaces)); port++) {
+    for (int port = 0; port < ARRAY_SIZE(usb_cdc_port_interfaces); port++) {
         if (usb_cdc_port_interfaces[port] == if_num) {
             return port;
         }
@@ -501,7 +501,7 @@ void DMA1_Channel2_IRQHandler() {
 
 /* USART Interrupt Handlers */
 
-__attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * usart,
+__always_inline inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * usart,
     volatile uint32_t *txa_bitband_clear) {
     uint32_t wait_rxne = 0;
     uint32_t status = usart->SR;

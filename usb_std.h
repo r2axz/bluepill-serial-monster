@@ -9,6 +9,8 @@
 
 #include <stdint.h>
 
+#include "aux.h"
+
 /* USB Descriptor Types */
 
 typedef enum {
@@ -25,7 +27,7 @@ typedef enum {
     usb_descriptor_type_interface_assoc = 0x0b,
     usb_descriptor_type_cs_interface    = 0x24,
     usb_descriptor_type_cs_endpoint     = 0x25,
-} __attribute__ ((packed)) usb_descriptor_type_t;
+} __packed usb_descriptor_type_t;
 
 /* USB Device Descriptor */
 
@@ -52,17 +54,17 @@ typedef enum {
     usb_device_class_misc                   = 0xef,
     usb_device_class_application_specific   = 0xfe,
     usb_device_class_vendor_specific        = 0xff,
-} __attribute__ ((packed)) usb_device_class_t;
+} __packed usb_device_class_t;
 
 typedef enum {
     usb_device_subclass_none    = 0x00,
     usb_device_subclass_iad     = 0x02,
-} __attribute__ ((packed)) usb_device_subclass_t;
+} __packed usb_device_subclass_t;
 
 typedef enum {
     usb_device_protocol_none    = 0x00,
     usb_device_protocol_iad     = 0x01,
-} __attribute__ ((packed)) usb_device_protocol_t;
+} __packed usb_device_protocol_t;
 
 #define USB_BCD_VERSION(maj, min, rev)  (((maj & 0xFF) << 8) | ((min & 0x0F) << 4) | (rev & 0x0F))
 
@@ -81,7 +83,7 @@ typedef struct {
     uint8_t     iProduct;
     uint8_t     iSerialNumber;
     uint8_t     bNumConfigurations;
-} __attribute__ ((packed)) usb_device_descriptor_t;
+} __packed usb_device_descriptor_t;
 
 /* USB Qualifier Descriptor */
 
@@ -95,7 +97,7 @@ typedef struct {
     uint8_t  bMaxPacketSize0;
     uint8_t  bNumConfigurations;
     uint8_t  bReserved;
-} __attribute__((packed)) usb_qualifier_descriptor_t;
+} __packed usb_qualifier_descriptor_t;
 
 /* USB Configuration Descriptor */
 
@@ -114,7 +116,7 @@ typedef struct  {
     uint8_t  iConfiguration;
     uint8_t  bmAttributes;
     uint8_t  bMaxPower;
-} __attribute__((packed)) usb_configuration_descriptor_t;
+} __packed usb_configuration_descriptor_t;
 
 /* USB Interface Descriptor */
 
@@ -128,7 +130,7 @@ typedef struct {
     uint8_t bInterfaceSubClass;
     uint8_t bInterfaceProtocol;
     uint8_t iInterface;
-} __attribute__((packed)) usb_interface_descriptor_t;
+} __packed usb_interface_descriptor_t;
 
 /* USB Interface Association Descriptor */
 
@@ -141,35 +143,35 @@ typedef struct {
     uint8_t bFunctionSubClass;
     uint8_t bFunctionProtocol;
     uint8_t iFunction;
-} __attribute__((packed)) usb_iad_descriptor_t;
+} __packed usb_iad_descriptor_t;
 
 /* USB Endpoint Descriptor */
 
 typedef enum {
     usb_endpoint_direction_out  = 0x00,
     usb_endpoint_direction_in   = 0x80,
-} __attribute__ ((packed)) usb_endpoint_direction_t;
+} __packed usb_endpoint_direction_t;
 
 typedef enum {
     usb_endpoint_type_control       = 0x00,
     usb_endpoint_type_isochronous   = 0x01,
     usb_endpoint_type_bulk          = 0x02,
     usb_endpoint_type_interrupt     = 0x03,
-} __attribute__ ((packed)) usb_endpoint_type_t;
+} __packed usb_endpoint_type_t;
 
 typedef enum {
     usb_endpoint_attribute_no_sync  = 0x00,
     usb_endpoint_attribute_async    = 0x04,
     usb_endpoint_attribute_adaptive = 0x08,
     usb_endpoint_attribute_sync     = 0x0c
-} __attribute__ ((packed)) usb_endpoint_attribute_t;
+} __packed usb_endpoint_attribute_t;
 
 
 typedef enum {
     usb_endpoint_usage_data                 = 0x00,
     usb_endpoint_usage_feedback             = 0x10,
     usb_endpoint_usage_implicit_feedback    = 0x20
-} __attribute__ ((packed)) usb_endpoint_usage_t;
+} __packed usb_endpoint_usage_t;
 
 typedef struct  {
     uint8_t  bLength;
@@ -178,7 +180,7 @@ typedef struct  {
     uint8_t  bmAttributes;
     uint16_t wMaxPacketSize;
     uint8_t  bInterval;
-} __attribute__((packed)) usb_endpoint_descriptor_t;
+} __packed usb_endpoint_descriptor_t;
 
 /* USB String Descriptor */
 
@@ -186,7 +188,7 @@ typedef struct {
     uint8_t  bLength;
     uint8_t  bDescriptorType;
     uint16_t wString[];
-} __attribute__((packed, aligned(2))) usb_string_descriptor_t;
+} __spacked usb_string_descriptor_t;
 
 #define __CAT(x,y) x ## y
 #define CAT(x,y) __CAT(x,y)
@@ -201,7 +203,7 @@ typedef struct {
 
 typedef enum {
     usb_language_code_en_US = 0x409,
-} __attribute__((packed)) usb_language_code_t;
+} __packed usb_language_code_t;
 
 /* USB Debug Descriptor */
 
@@ -210,7 +212,7 @@ typedef struct  {
     uint8_t  bDescriptorType;
     uint8_t  bDebugInEndpoint;
     uint8_t  bDebugOutEndpoint;
-} __attribute__((packed)) usb_debug_descriptor_t;
+} __packed usb_debug_descriptor_t;
 
 
 /* USB Control Endpoint Related Definitions */
@@ -248,7 +250,7 @@ typedef struct {
     uint16_t wIndex;
     uint16_t wLength;
     uint8_t payload[0];
-} __attribute__ ((packed)) usb_setup_t;
+} __packed usb_setup_t;
 
 typedef enum {
     usb_device_request_get_status          = 0x00,

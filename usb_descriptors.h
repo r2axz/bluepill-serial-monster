@@ -8,6 +8,7 @@
 #define USB_DESCRIPTORS_H
 
 #include <stddef.h>
+#include "aux.h"
 #include "usb_core.h"
 #include "usb_std.h"
 #include "usb_cdc.h"
@@ -29,7 +30,7 @@ typedef enum {
     usb_string_index_uart_2_interface_name,
     usb_string_index_uart_3_interface_name,
     usb_string_index_last,
-} __attribute__ ((packed)) usb_string_index_t;
+} __packed usb_string_index_t;
 
 extern const usb_string_descriptor_t *usb_string_descriptors[usb_string_index_last];
 
@@ -94,7 +95,7 @@ typedef struct {
     usb_interface_descriptor_t          data_2;
     usb_endpoint_descriptor_t           data_eprx_2;
     usb_endpoint_descriptor_t           data_eptx_2;
-} __attribute__((packed)) usb_device_configuration_descriptor_t;
+} __packed usb_device_configuration_descriptor_t;
 
 extern const usb_device_configuration_descriptor_t usb_configuration_descriptor;
 

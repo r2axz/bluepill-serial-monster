@@ -11,6 +11,8 @@
 
 #include <stddef.h>
 #include <stm32f1xx.h>
+
+#include "aux.h"
 #include "circ_buf.h"
 #include "usb.h"
 #include "usb_std.h"
@@ -21,7 +23,7 @@
 #define USB_PACKET_BUFFER_ALIGNMENT 4
 
 typedef uint16_t    pb_word_t;
-typedef pb_word_t   pb_aligned_word_t __attribute__ ((aligned(USB_PACKET_BUFFER_ALIGNMENT)));
+typedef pb_word_t   pb_aligned_word_t __aligned(USB_PACKET_BUFFER_ALIGNMENT);
 
 typedef struct {
     pb_aligned_word_t tx_offset;
@@ -63,7 +65,7 @@ typedef struct {
     usb_endpoint_event_handler_t event_handler;
 } usb_endpoint_t;
 
-#define USB_NUM_ENDPOINTS (sizeof(usb_endpoints)/sizeof(*usb_endpoints))
+#define USB_NUM_ENDPOINTS ARRAY_SIZE(usb_endpoints)
 #define USB_MAX_ENDPOINTS 8
 
 /* USB IO Initialization */
