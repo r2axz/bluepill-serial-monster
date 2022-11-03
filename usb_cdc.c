@@ -396,6 +396,7 @@ void usb_cdc_config_mode_enter() {
     cdc_state->tx_buf.tail = cdc_state->tx_buf.head = 0;
     usart->CR1 &= ~(USART_CR1_RE);
     dma_tx_ch->CCR &= ~(DMA_CCR_EN);
+    cdc_port_set_enable(USB_CDC_CONFIG_PORT, 0);
     cdc_shell_init();
     usb_cdc_config_mode = 1;
 }
@@ -408,6 +409,7 @@ void usb_cdc_config_mode_leave() {
     cdc_state->rx_buf.tail = cdc_state->rx_buf.head = dma_head;
     cdc_state->tx_buf.tail = cdc_state->tx_buf.head = 0;
     usart->CR1 |= USART_CR1_RE;
+    cdc_port_set_enable(USB_CDC_CONFIG_PORT, 1);
     usb_cdc_config_mode = 0;
 }
 
