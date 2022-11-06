@@ -88,7 +88,8 @@ static const default_config_t default_config = {
     },
 };
 
-static gpion_pin_t default_config_pin_load(device_config_t *target, const default_gpio_pin_t *source);
+static gpion_pin_t default_config_load_pin_int(device_config_t *target, const default_gpio_pin_t *source);
+static void default_config_copy(gpio_pin_t *target, const default_gpio_pin_t *source);
 static void default_config_pin_last(device_config_t *target, gpion_pin_t pin);
 
 void default_config_load(device_config_t *target) {
@@ -115,23 +116,23 @@ void default_config_load(device_config_t *target) {
         for (gpion_pin_t pin = 0; pin < gpio_pin_last; ++pin) {
             default_free.pin = pin;
             target->gpio_config.pins[pin].status = gpio_status_free;
-            default_config_pin_load(target, &default_free);
+            default_config_load_pin_int(target, &default_free);
         }
         // configure system pins
         for (int i = 0; default_config.blocked_pins[i].pin != default_blocked_pin_end; ++i) {
             gpion_pin_t pin = default_config.blocked_pins[i].pin;
             default_blocked.pin = pin;
-            default_config_pin_load(target, &default_blocked);
+            default_config_load_pin_int(target, &default_blocked);
         }
         // configure misc pins
-        target->status_led_pin = default_config_pin_load(target, &default_config.status_led_pin);
-        target->config_pin = default_config_pin_load(target, &default_config.config_pin);
+        target->status_led_pin = default_config_load_pin_int(target, &default_config.status_led_pin);
+        target->config_pin = default_config_load_pin_int(target, &default_config.config_pin);
         // configure uart pins
         for (int port = 0; port < ARRAY_SIZE(target->cdc_config.port_config) && port < ARRAY_SIZE(default_config.cdc_config.port_config); ++port) {
             const default_port_t *default_port = &default_config.cdc_config.port_config[port];
             cdc_port_t *port_config = &target->cdc_config.port_config[port];
             for (int pin = 0; pin < ARRAY_SIZE(default_port->pins) && pin < ARRAY_SIZE(port_config->pins); ++pin) {
-                port_config->pins[pin] = default_config_pin_load(target, &default_port->pins[pin]);
+                port_config->pins[pin] = default_config_load_pin_int(target, &default_port->pins[pin]);
             }
         }
         // configure other pins
@@ -139,6 +140,51 @@ void default_config_load(device_config_t *target) {
             default_config_pin_last(target, pin);
         }
     }
+}
+
+void default_config_load_pin(device_config_t *target, gpion_pin_t pinn)
+{
+    gpio_pin_t *pin = gpion_to_gpio(pinn);
+    if (!pin) {
+        return;
+    }
+    const default_gpio_pin_t *conf = default_config_get_pin(pinn);
+    if (!conf) {
+        return;
+    }
+    default_config_copy(pin, conf);
+}
+
+const default_gpio_pin_t *default_config_get_pin(gpion_pin_t pinn)
+{
+    const default_gpio_pin_t *conf = 0;
+
+    if (!conf && default_config.config_pin.pin == pinn) {
+        conf = &default_config.config_pin;
+    }
+    if (!conf && default_config.status_led_pin.pin == pinn) {
+        conf = &default_config.status_led_pin;
+    }
+    for (int port = 0; !conf && port < ARRAY_SIZE(default_config.cdc_config.port_config); ++port) {
+        const default_port_t *cport = &default_config.cdc_config.port_config[port];
+        for (cdc_pin_t cpin = 0; !conf && cpin < cdc_pin_last; ++cpin) {
+            if (cport->pins[cpin].pin == pinn) {
+                conf = &cport->pins[cpin];
+            }
+        }
+    }
+
+    return conf;
+}
+
+static void default_config_copy(gpio_pin_t *target, const default_gpio_pin_t *source)
+{
+    target->dir = source->dir;
+    target->func = source->func;
+    target->output = source->output;
+    target->pull = source->pull;
+    target->polarity = source->polarity;
+    target->speed = source->speed;
 }
 
 const char *default_config_get_blocked_reason(gpion_pin_t pin) {
@@ -151,7 +197,7 @@ const char *default_config_get_blocked_reason(gpion_pin_t pin) {
     return not_blocked;
 }
 
-static gpion_pin_t default_config_pin_load(device_config_t *target, const default_gpio_pin_t *source){
+static gpion_pin_t default_config_load_pin_int(device_config_t *target, const default_gpio_pin_t *source){
     if (source->pin == gpio_pin_unknown) {
         return gpio_pin_unknown;
     }
@@ -160,13 +206,8 @@ static gpion_pin_t default_config_pin_load(device_config_t *target, const defaul
         return source->pin;
     }
 
-    pin->dir = source->dir;
-    pin->func = source->func;
-    pin->output = source->output;
-    pin->pull = source->pull;
-    pin->polarity = source->polarity;
-    pin->speed = source->speed;
     pin->status = source->status;
+    default_config_copy(pin, source);
 
     return source->pin;
 }

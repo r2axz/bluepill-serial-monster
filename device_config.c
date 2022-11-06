@@ -126,3 +126,72 @@ void device_config_reset() {
     default_config_load(&current_device_config);
     device_config_save();
 }
+
+static int cdc_port_set_enable_confugred(int port, int enabled);
+static void gpio_pin_alternative_update(int port, gpio_status_t new_status)
+{
+    device_config_t *device_config = device_config_get();
+    cdc_port_t *port_config = &device_config->cdc_config.port_config[port];
+    gpio_pin_t *rx = gpion_to_gpio(port_config->pins[cdc_pin_rx]);
+    gpio_pin_t *tx = gpion_to_gpio(port_config->pins[cdc_pin_tx]);
+
+    if (rx->status == gpio_status_occupied && tx->status == gpio_status_occupied) {
+        cdc_port_set_enable_confugred(port, 1);
+    } else if (rx->status != tx->status && new_status == gpio_status_free) {
+        cdc_port_set_enable_confugred(port, 0);
+    }
+}
+
+int gpio_pin_set_status(gpion_pin_t pinn, gpio_status_t new_status)
+{
+    gpio_pin_t *pin = gpion_to_gpio(pinn);
+    device_config_t *device_config = device_config_get();
+    if (!pin) return -1;
+    if (pin->status == new_status || pin->status == gpio_status_blocked ||
+        (new_status != gpio_status_free && new_status != gpio_status_occupied)) {
+        return 0;
+    }
+    cdc_pin_ref_t cdc_pin = gpion_to_cdc(pinn);
+
+    pin->status = new_status;
+    if (cdc_pin.port >= 0 && cdc_pin.port < USB_CDC_NUM_PORTS) {
+        if (new_status == gpio_status_occupied) {
+            default_config_load_pin(device_config, pinn);
+            usb_cdc_reconfigure_port_pin(cdc_pin.port, cdc_pin.pin);
+        }
+        if (cdc_pin.pin == cdc_pin_rx || cdc_pin.pin == cdc_pin_tx) {
+            gpio_pin_alternative_update(cdc_pin.port, new_status);
+        }
+    }
+    return 0;
+}
+
+int cdc_port_set_enable(int port, int enabled)
+{
+    device_config_t *device_config = device_config_get();
+    cdc_port_t *port_config = &device_config->cdc_config.port_config[port];
+    if (enabled) {
+        gpio_pin_set_status(port_config->pins[cdc_pin_rx], gpio_status_occupied);
+        gpio_pin_set_status(port_config->pins[cdc_pin_tx], gpio_status_occupied);
+    } else {
+        gpio_pin_set_status(port_config->pins[cdc_pin_rx], gpio_status_free);
+        gpio_pin_set_status(port_config->pins[cdc_pin_tx], gpio_status_free);
+    }
+    return 0;
+}
+
+static int cdc_port_set_enable_confugred(int port, int enabled)
+{
+    device_config_t *device_config = device_config_get();
+    cdc_port_t *port_config = &device_config->cdc_config.port_config[port];
+    if (enabled) {
+        usb_cdc_reconfigure_port(port);
+        usb_cdc_enable_port(port);
+    } else {
+        usb_cdc_suspend_port(port);
+        for (int pin = 0; pin < cdc_pin_last; ++pin) {
+            gpio_pin_set_status(port_config->pins[pin], gpio_status_free);
+        }
+    }
+    return 0;
+}

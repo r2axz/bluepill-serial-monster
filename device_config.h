@@ -27,4 +27,7 @@ device_config_t *device_config_get();
 void device_config_save();
 void device_config_reset();
 
+int gpio_pin_set_status(gpion_pin_t pin, gpio_status_t new_status);
+int cdc_port_set_enable(int port, int enabled);
+
 #endif /* DEVICE_CONFIG_H_ */

@@ -46,5 +46,7 @@ typedef struct {
 
 void default_config_load(device_config_t *target);
 const char *default_config_get_blocked_reason(gpion_pin_t pin);
+void default_config_load_pin(device_config_t *target, gpion_pin_t pinn);
+const default_gpio_pin_t *default_config_get_pin(gpion_pin_t);
 
 #endif /* DEFAULT_CONFIG_H */

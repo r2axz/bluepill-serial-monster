@@ -175,6 +175,8 @@ void usb_cdc_reset();
 void usb_cdc_enable();
 void usb_cdc_suspend();
 void usb_cdc_frame();
+void usb_cdc_enable_port(int port);
+void usb_cdc_suspend_port(int port);
 
 /* CDC Pins */
 
@@ -195,6 +197,7 @@ typedef enum {
 /* Configuration Changed Hooks */
 
 void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin);
+void usb_cdc_reconfigure_port(int port);
 void usb_cdc_reconfigure();
 
 /* CDC Device Definitions */
