@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -26,7 +26,7 @@ static struct {
 
 void usb_device_handle_reset() {
     usb_device.state = usb_device_state_reset;
-    usb_device.address = 0;    
+    usb_device.address = 0;
     usb_device.configuration = 0;
     usb_cdc_reset();
     usb_io_reset();
@@ -62,6 +62,7 @@ void usb_device_poll() {
 
 usb_status_t usb_control_endpoint_process_get_descriptor(usb_setup_t *setup,
                                             void **payload, size_t *payload_size, usb_tx_complete_cb_t *tx_callback_ptr) {
+    (void) tx_callback_ptr;
     usb_descriptor_type_t descriptor_type = (setup->wValue >> 8);
     uint8_t descriptor_index = (setup->wValue & 0xff);
     switch (descriptor_type) {
@@ -137,6 +138,8 @@ usb_status_t usb_control_endpoint_process_device_request(usb_setup_t *setup,
 
 usb_status_t usb_control_endpoint_process_interface_request(usb_setup_t *setup,
                                             void **payload, size_t *payload_size, usb_tx_complete_cb_t *tx_callback_ptr) {
+    (void) payload_size;
+    (void) tx_callback_ptr;
     if (setup->bRequest == usb_device_request_get_status) {
         ((uint8_t*)(*payload))[0] = 0;
         ((uint8_t*)(*payload))[1] = 0;
@@ -149,6 +152,8 @@ usb_status_t usb_control_endpoint_process_interface_request(usb_setup_t *setup,
 usb_status_t usb_control_endpoint_process_endpoint_request(usb_setup_t *setup,
                                             void **payload, size_t *payload_size, usb_tx_complete_cb_t *tx_callback_ptr) {
 
+    (void) payload_size;
+    (void) tx_callback_ptr;
     uint8_t ep_num = setup->wIndex & ~(usb_endpoint_direction_in);
     usb_endpoint_direction_t ep_direction = setup->wIndex & usb_endpoint_direction_in;
     if ((setup->bRequest == usb_device_request_set_feature) ||
@@ -262,7 +267,7 @@ static void usb_control_endpoint_process_rx(uint8_t ep_num) {
             usb_control_ep_struct.setup = (usb_setup_t *)&usb_control_ep_struct.setup_buf;
             usb_control_ep_struct.payload = usb_control_ep_struct.setup->payload;
             usb_control_ep_struct.payload_size = usb_control_ep_struct.setup->wLength;
-            if ((usb_control_ep_struct.setup->direction == usb_setup_direction_host_to_device) && 
+            if ((usb_control_ep_struct.setup->direction == usb_setup_direction_host_to_device) &&
                     (usb_control_ep_struct.setup->wLength != 0)) {
                 if (usb_control_ep_struct.payload_size > USB_SETUP_MAX_PAYLOAD_SIZE) {
                     usb_control_endpoint_stall(ep_num);
@@ -295,7 +300,7 @@ static void usb_control_endpoint_process_rx(uint8_t ep_num) {
     switch (usb_control_endpoint_process_request(usb_control_ep_struct.setup,
                                                  &usb_control_ep_struct.payload,
                                                  &usb_control_ep_struct.payload_size,
-                                                 &usb_control_ep_struct.tx_complete_callback)) {                              
+                                                 &usb_control_ep_struct.tx_complete_callback)) {
     case usb_status_ack:
         if (usb_control_ep_struct.setup->direction == usb_setup_direction_device_to_host) {
             if (usb_control_ep_struct.payload_size < usb_control_ep_struct.setup->wLength) {

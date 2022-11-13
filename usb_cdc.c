@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -26,12 +26,13 @@ static uint8_t usb_cdc_config_mode = 0;
 
 static const usb_cdc_line_coding_t usb_cdc_default_line_coding = {
     .dwDTERate      = 9600,
-    .bCharFormat    = usb_cdc_char_format_1_stop_bit, 
+    .bCharFormat    = usb_cdc_char_format_1_stop_bit,
     .bParityType    = usb_cdc_parity_type_none,
     .bDataBits      = 8,
 };
 
 typedef struct {
+    int                     enabled;
     circ_buf_t              rx_buf;
     uint8_t                 _rx_data[USB_CDC_BUF_SIZE];
     circ_buf_t              tx_buf;
@@ -59,7 +60,7 @@ static USART_TypeDef* const usb_cdc_port_usarts[] = {
 };
 
 static USART_TypeDef* usb_cdc_get_port_usart(int port) {
-    if (port < (sizeof(usb_cdc_port_usarts) / sizeof(*usb_cdc_port_usarts))){
+    if (port < ARRAY_SIZE(usb_cdc_port_usarts)){
         return usb_cdc_port_usarts[port];
     }
     return (USART_TypeDef*)0;
@@ -71,17 +72,32 @@ typedef enum {
     usb_cdc_port_direction_last
 } usb_cdc_port_direction_t;
 
+static int usb_cdc_port_is_enabled(int port) {
+    if (port < USB_CDC_NUM_PORTS) {
+        const device_config_t *device_config = device_config_get();
+        const cdc_port_t *port_config = &device_config->cdc_config.port_config[port];
+        const gpio_pin_t *rx = gpion_to_gpio(port_config->pins[cdc_pin_rx]);
+        const gpio_pin_t *tx = gpion_to_gpio(port_config->pins[cdc_pin_tx]);
+        if (rx && tx) {
+            return !!usb_cdc_states[port].enabled &&
+                rx->status == gpio_status_occupied &&
+                tx->status == gpio_status_occupied;
+        }
+    }
+    return 0;
+}
+
 static DMA_Channel_TypeDef* usb_cdc_get_port_dma_channel(int port, usb_cdc_port_direction_t port_dir) {
     static DMA_Channel_TypeDef* const port_dma_channels[][usb_cdc_port_direction_last] = {
         { DMA1_Channel5,  DMA1_Channel4 },
         { DMA1_Channel6,  DMA1_Channel7 },
         { DMA1_Channel3,  DMA1_Channel2 },
     };
-    if (port < (sizeof(port_dma_channels) / sizeof(*port_dma_channels)) && 
+    if (port < ARRAY_SIZE(port_dma_channels) &&
         port_dir < usb_cdc_port_direction_last) {
         return port_dma_channels[port][port_dir];
     }
-    return (DMA_Channel_TypeDef*)0; 
+    return (DMA_Channel_TypeDef*)0;
 }
 
 static uint8_t const usb_cdc_port_data_endpoints[] = {
@@ -91,14 +107,14 @@ static uint8_t const usb_cdc_port_data_endpoints[] = {
 };
 
 static uint8_t usb_cdc_get_port_data_ep(int port) {
-    if (port < (sizeof(usb_cdc_port_data_endpoints) / sizeof(*usb_cdc_port_data_endpoints))) {
+    if (port < ARRAY_SIZE(usb_cdc_port_data_endpoints)) {
         return usb_cdc_port_data_endpoints[port];
     }
     return -1;
 }
 
 static int usb_cdc_data_endpoint_port(uint8_t ep_num) {
-    for (int port = 0; port < (sizeof(usb_cdc_port_data_endpoints) / sizeof(*usb_cdc_port_data_endpoints)); port++) {
+    for (int port = 0; port < ARRAY_SIZE(usb_cdc_port_data_endpoints); port++) {
         if (usb_cdc_port_data_endpoints[port] == ep_num) {
             return port;
         }
@@ -113,7 +129,7 @@ static uint8_t const usb_cdc_port_interrupt_endpoints[] = {
 };
 
 static uint8_t usb_cdc_get_port_notification_ep(int port) {
-    if (port < (sizeof(usb_cdc_port_interrupt_endpoints) / sizeof(*usb_cdc_port_interrupt_endpoints))) {
+    if (port < ARRAY_SIZE(usb_cdc_port_interrupt_endpoints)) {
         return usb_cdc_port_interrupt_endpoints[port];
     }
     return -1;
@@ -124,14 +140,14 @@ static uint8_t const usb_cdc_port_interfaces[] = {
 };
 
 static int usb_cdc_get_port_interface(int port) {
-    if (port < (sizeof(usb_cdc_port_interfaces) / sizeof(*usb_cdc_port_interfaces))) {
+    if (port < ARRAY_SIZE(usb_cdc_port_interfaces)) {
         return usb_cdc_port_interfaces[port];
     }
     return -1;
 }
 
 static int usb_cdc_get_interface_port(uint8_t if_num) {
-    for (int port = 0; port < (sizeof(usb_cdc_port_interfaces) / sizeof(*usb_cdc_port_interfaces)); port++) {
+    for (int port = 0; port < ARRAY_SIZE(usb_cdc_port_interfaces); port++) {
         if (usb_cdc_port_interfaces[port] == if_num) {
             return port;
         }
@@ -196,8 +212,8 @@ static void usb_cdc_notify_port_overrun(int port) {
 static void usb_cdc_update_port_dtr(int port) {
     if (port < USB_CDC_NUM_PORTS) {
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
-        const gpio_pin_t *dtr_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_dtr];
-        gpio_pin_set(dtr_pin, cdc_state->dtr_active);
+        gpion_pin_t dtr_pin = device_config_get()->cdc_config.port_config[port].pins[cdc_pin_dtr];
+        gpion_pin_set(dtr_pin, cdc_state->dtr_active);
     }
 }
 
@@ -211,11 +227,13 @@ static void usb_cdc_set_port_dtr(int port, int dtr_active) {
 
 static void usb_cdc_update_port_rts(int port) {
     if ((port < USB_CDC_NUM_PORTS)) {
-        const gpio_pin_t *rts_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_rts];
-        usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
-        circ_buf_t *rx_buf = &cdc_state->rx_buf;
-        int rts_active = ((circ_buf_space(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE) > (USB_CDC_BUF_SIZE>>1))) && cdc_state->rts_active;
-        gpio_pin_set(rts_pin, rts_active);
+        gpion_pin_t rts_pin = device_config_get()->cdc_config.port_config[port].pins[cdc_pin_rts];
+        if (gpion_pin_get_status(rts_pin) == gpio_status_occupied) {
+            usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
+            circ_buf_t *rx_buf = &cdc_state->rx_buf;
+            int rts_active = ((circ_buf_space(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE) > (USB_CDC_BUF_SIZE>>1))) && cdc_state->rts_active;
+            gpion_pin_set(rts_pin, rts_active);
+        }
     }
 }
 
@@ -229,8 +247,8 @@ static void usb_cdc_set_port_rts(int port, int rts_active) {
 static void usb_cdc_update_port_txa(int port) {
     if (port < USB_CDC_NUM_PORTS) {
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
-        const gpio_pin_t *txa_pin = &device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa];
-        gpio_pin_set(txa_pin, cdc_state->txa_active);
+        const gpion_pin_t txa_pin = device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa];
+        gpion_pin_set(txa_pin, cdc_state->txa_active);
     }
 }
 
@@ -378,6 +396,7 @@ void usb_cdc_config_mode_enter() {
     cdc_state->tx_buf.tail = cdc_state->tx_buf.head = 0;
     usart->CR1 &= ~(USART_CR1_RE);
     dma_tx_ch->CCR &= ~(DMA_CCR_EN);
+    cdc_port_set_enable(USB_CDC_CONFIG_PORT, 0);
     cdc_shell_init();
     usb_cdc_config_mode = 1;
 }
@@ -390,6 +409,7 @@ void usb_cdc_config_mode_leave() {
     cdc_state->rx_buf.tail = cdc_state->rx_buf.head = dma_head;
     cdc_state->tx_buf.tail = cdc_state->tx_buf.head = 0;
     usart->CR1 |= USART_CR1_RE;
+    cdc_port_set_enable(USB_CDC_CONFIG_PORT, 1);
     usb_cdc_config_mode = 0;
 }
 
@@ -468,11 +488,15 @@ static void usb_cdc_port_tx_complete(int port) {
             cdc_state->line_state_change_ready = 1;
         }
     }
-    if ((port != USB_CDC_CONFIG_PORT) || !usb_cdc_config_mode) {
-        usb_cdc_port_start_tx(port);
-    } else {
+    if (port == USB_CDC_CONFIG_PORT && usb_cdc_config_mode) {
+        usb_cdc_config_mode_process_tx();
         usb_cdc_set_port_txa(port, 0);
-        usb_cdc_config_mode_process_tx(port);
+    } else {
+        if (usb_cdc_port_is_enabled(port)) {
+            usb_cdc_port_start_tx(port);
+        } else {
+            usb_cdc_set_port_txa(port, 0);
+        }
     }
 }
 
@@ -501,7 +525,7 @@ void DMA1_Channel2_IRQHandler() {
 
 /* USART Interrupt Handlers */
 
-__attribute__((always_inline)) inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * usart,
+__always_inline inline static void usb_cdc_usart_irq_handler(int port, USART_TypeDef * usart,
     volatile uint32_t *txa_bitband_clear) {
     uint32_t wait_rxne = 0;
     uint32_t status = usart->SR;
@@ -537,7 +561,7 @@ void USART3_IRQHandler() {
 
 void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin) {
     if (port < USB_CDC_NUM_PORTS && pin < cdc_pin_last) {
-        gpio_pin_init(&device_config_get()->cdc_config.port_config[port].pins[pin]);
+        gpion_pin_init(device_config_get()->cdc_config.port_config[port].pins[pin]);
         if (pin == cdc_pin_rts) {
             usb_cdc_update_port_rts(port);
         } else if (pin == cdc_pin_dtr) {
@@ -545,26 +569,26 @@ void usb_cdc_reconfigure_port_pin(int port, cdc_pin_t pin) {
         } else if (pin == cdc_pin_txa) {
             usb_cdc_update_port_txa(port);
             usb_cdc_states[port].txa_bitband_clear =
-                gpio_pin_get_bitband_clear_addr(&device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa]);
+                gpion_pin_get_bitband_clear_addr(device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa]);
         }
     }
 }
 
-static void usb_cdc_configure_port(int port) {
+void usb_cdc_reconfigure_port(int port) {
     const device_config_t *device_config = device_config_get();
     for (cdc_pin_t pin = 0; pin < cdc_pin_last; pin++) {
-        gpio_pin_init(&device_config->cdc_config.port_config[port].pins[pin]);
+        gpion_pin_init(device_config->cdc_config.port_config[port].pins[pin]);
         usb_cdc_update_port_rts(port);
         usb_cdc_update_port_dtr(port);
         usb_cdc_update_port_txa(port);
         usb_cdc_states[port].txa_bitband_clear =
-                gpio_pin_get_bitband_clear_addr(&device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa]);
+                gpion_pin_get_bitband_clear_addr(device_config_get()->cdc_config.port_config[port].pins[cdc_pin_txa]);
     }
 }
 
 void usb_cdc_reconfigure() {
     for (int port = 0; port < USB_CDC_NUM_PORTS; port++) {
-        usb_cdc_configure_port(port);
+        usb_cdc_reconfigure_port(port);
     }
 }
 
@@ -579,14 +603,14 @@ void usb_cdc_reset() {
     NVIC_EnableIRQ(DMA1_Channel4_IRQn);
     NVIC_SetPriority(DMA1_Channel7_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
     NVIC_EnableIRQ(DMA1_Channel7_IRQn);
-    /* 
+    /*
      * Disable JTAG interface (SWD is still enabled),
      * this frees PA15, PB3, PB4 (needed for DSR/RI inputs).
      */
     RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
     AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
     /* Configuration Mode Pin */
-    gpio_pin_init(&device_config->config_pin);
+    gpion_pin_init(device_config->config_pin);
     /* USART & DMA Reset and Setup */
     RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_USART3EN;
@@ -601,7 +625,7 @@ void usb_cdc_reset() {
     for (int port=0; port<USB_CDC_NUM_PORTS; port++) {
         (void)usb_cdc_states[port]._rx_data;
         (void)usb_cdc_states[port]._tx_data;
-        usb_cdc_configure_port(port);
+        usb_cdc_reconfigure_port(port);
         USART_TypeDef *usart = usb_cdc_get_port_usart(port);
         DMA_Channel_TypeDef *dma_rx_ch = usb_cdc_get_port_dma_channel(port, usb_cdc_port_direction_rx);
         DMA_Channel_TypeDef *dma_tx_ch = usb_cdc_get_port_dma_channel(port, usb_cdc_port_direction_tx);
@@ -629,16 +653,32 @@ void usb_cdc_reset() {
 void usb_cdc_enable() {
     usb_cdc_enabled = 1;
     for (int port=0; port<USB_CDC_NUM_PORTS; port++) {
-        USART_TypeDef *usart = usb_cdc_get_port_usart(port);
-        usb_cdc_port_start_rx(port);
-        usart->CR1 |= USART_CR1_PEIE | USART_CR1_IDLEIE | USART_CR1_RE | USART_CR1_PEIE;
+        usb_cdc_enable_port(port);
     }
 }
 
 void usb_cdc_suspend() {
     usb_cdc_enabled = 0;
     for (int port=0; port<USB_CDC_NUM_PORTS; port++) {
+        usb_cdc_suspend_port(port);
+    }
+}
+
+void usb_cdc_enable_port(int port)
+{
+    if (port >= 0 && port < USB_CDC_NUM_PORTS) {
         USART_TypeDef *usart = usb_cdc_get_port_usart(port);
+        usb_cdc_states[port].enabled = 1;
+        usb_cdc_port_start_rx(port);
+        usart->CR1 |= USART_CR1_PEIE | USART_CR1_IDLEIE | USART_CR1_RE | USART_CR1_PEIE;
+    }
+}
+
+void usb_cdc_suspend_port(int port)
+{
+    if (port >= 0 && port < USB_CDC_NUM_PORTS) {
+        USART_TypeDef *usart = usb_cdc_get_port_usart(port);
+        usb_cdc_states[port].enabled = 0;
         usart->CR1 &= ~(USART_CR1_UE);
     }
 }
@@ -652,13 +692,13 @@ void usb_cdc_frame() {
             for (int port = 0; port < USB_CDC_NUM_PORTS; port++) {
                 const cdc_port_t *port_config = &device_config_get()->cdc_config.port_config[port];
                 usb_cdc_serial_state_t _state, new_state, control_lines_state = 0;
-                if (gpio_pin_get(&port_config->pins[cdc_pin_dsr])) {
+                if (gpion_pin_get_default(port_config->pins[cdc_pin_dsr], 1)) {
                     control_lines_state |= USB_CDC_SERIAL_STATE_DSR;
                 }
-                if (gpio_pin_get(&port_config->pins[cdc_pin_dcd])) {
+                if (gpion_pin_get(port_config->pins[cdc_pin_dcd])) {
                     control_lines_state |= USB_CDC_SERIAL_STATE_DCD;
                 }
-                if (gpio_pin_get(&port_config->pins[cdc_pin_ri])) {
+                if (gpion_pin_get(port_config->pins[cdc_pin_ri])) {
                     control_lines_state |= USB_CDC_SERIAL_STATE_RI;
                 }
                 do {
@@ -667,7 +707,7 @@ void usb_cdc_frame() {
                     new_state |= control_lines_state;
                 } while (!(__sync_bool_compare_and_swap(&usb_cdc_states[port].serial_state, _state, new_state)));
             }
-            if (gpio_pin_get(&device_config->config_pin) != usb_cdc_config_mode) {
+            if (gpion_pin_get_default(device_config->config_pin, 1) != usb_cdc_config_mode) {
                 if (usb_cdc_config_mode) {
                     usb_cdc_config_mode_leave();
                 } else {
@@ -691,14 +731,18 @@ void usb_cdc_data_endpoint_event_handler(uint8_t ep_num, usb_endpoint_event_t ep
             size_t tx_space_available = circ_buf_space(tx_buf->head, tx_buf->tail, USB_CDC_BUF_SIZE);
             size_t rx_bytes_available = usb_bytes_available(ep_num);
             if ((port == USB_CDC_CONFIG_PORT) && usb_cdc_config_mode) {
-                usb_cdc_config_mode_process_tx(port);
+                usb_cdc_config_mode_process_tx();
             } else {
                 /* Do not receive data until line state change is complete */
                 if ((tx_space_available < rx_bytes_available) || (cdc_state->line_state_change_pending)) {
                     cdc_state->usb_rx_pending_ep = ep_num;
                 } else {
                     usb_circ_buf_read(ep_num, tx_buf, USB_CDC_BUF_SIZE);
-                    usb_cdc_port_start_tx(port);
+                    if (usb_cdc_port_is_enabled(port)) {
+                        usb_cdc_port_start_tx(port);
+                    } else {
+                        usb_cdc_set_port_txa(port, 0);
+                    }
                 }
             }
         }
@@ -707,6 +751,7 @@ void usb_cdc_data_endpoint_event_handler(uint8_t ep_num, usb_endpoint_event_t ep
 
 usb_status_t usb_cdc_ctrl_process_request(usb_setup_t *setup, void **payload,
                                           size_t *payload_size, usb_tx_complete_cb_t *tx_callback_ptr) {
+    (void) tx_callback_ptr;
     if ((setup->type == usb_setup_type_class) &&
         (setup->recepient == usb_setup_recepient_interface)) {
         int if_num = setup->wIndex;
@@ -720,7 +765,7 @@ usb_status_t usb_cdc_ctrl_process_request(usb_setup_t *setup, void **payload,
                 if (setup->wLength == sizeof(usb_cdc_line_coding_t)) {
                     int dry_run = 0;
                     circ_buf_t *tx_buf = &usb_cdc_states[port].tx_buf;
-                    /* 
+                    /*
                      * If the TX buffer is not empty, defer setting
                      * line coding until all data are sent over the serial port.
                      */
@@ -753,7 +798,7 @@ void usb_cdc_poll() {
     for (int port = 0; port < (USB_CDC_NUM_PORTS); port++) {
         usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
         circ_buf_t *tx_buf = &cdc_state->tx_buf;
-        if ((port != USB_CDC_CONFIG_PORT) || (usb_cdc_config_mode == 0)) {
+        if (((port != USB_CDC_CONFIG_PORT) || (usb_cdc_config_mode == 0)) && usb_cdc_port_is_enabled(port)) {
             usb_cdc_sync_rx_buffer(port);
         }
         usb_cdc_notify_port_state_change(port);
@@ -768,7 +813,11 @@ void usb_cdc_poll() {
             size_t rx_bytes_available = usb_bytes_available(cdc_state->usb_rx_pending_ep);
             if (tx_space_available >= rx_bytes_available) {
                 usb_circ_buf_read(cdc_state->usb_rx_pending_ep, tx_buf, USB_CDC_BUF_SIZE);
-                usb_cdc_port_start_tx(port);
+                if (usb_cdc_port_is_enabled(port)) {
+                    usb_cdc_port_start_tx(port);
+                } else {
+                    usb_cdc_set_port_txa(port, 0);
+                }
                 cdc_state->usb_rx_pending_ep = 0;
             }
         }

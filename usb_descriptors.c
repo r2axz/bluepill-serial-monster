@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -29,42 +29,42 @@ const usb_endpoint_t usb_endpoints[usb_endpoint_address_last] = {
         .event_handler = usb_control_endpoint_event_handler,
     },
     /*  CDC 0 Interrupt Endpoint */
-    { 
+    {
         .type       = usb_endpoint_type_interrupt,
         .rx_size    = 0,
         .tx_size    = USB_CDC_INTERRUPT_ENDPOINT_SIZE,
         .event_handler = 0,
     },
      /*  CDC 0 Data Endpoint */
-    { 
+    {
         .type       = usb_endpoint_type_bulk,
         .rx_size    = USB_CDC_DATA_0_ENDPOINT_SIZE,
         .tx_size    = USB_CDC_DATA_0_ENDPOINT_SIZE,
         .event_handler = usb_cdc_data_endpoint_event_handler,
     },
     /*  CDC 1 Interrupt Endpoint */
-    { 
+    {
         .type       = usb_endpoint_type_interrupt,
         .rx_size    = 0,
         .tx_size    = USB_CDC_INTERRUPT_ENDPOINT_SIZE,
         .event_handler = 0,
     },
      /*  CDC 1 Data Endpoint */
-    { 
+    {
         .type       = usb_endpoint_type_bulk,
         .rx_size    = USB_CDC_DATA_1_ENDPOINT_SIZE,
         .tx_size    = USB_CDC_DATA_1_ENDPOINT_SIZE,
         .event_handler = usb_cdc_data_endpoint_event_handler,
     },
     /*  CDC 2 Interrupt Endpoint */
-    { 
+    {
         .type       = usb_endpoint_type_interrupt,
         .rx_size    = 0,
         .tx_size    = USB_CDC_INTERRUPT_ENDPOINT_SIZE,
         .event_handler = 0,
     },
      /*  CDC 2 Data Endpoint */
-    { 
+    {
         .type       = usb_endpoint_type_bulk,
         .rx_size    = USB_CDC_DATA_2_ENDPOINT_SIZE,
         .tx_size    = USB_CDC_DATA_2_ENDPOINT_SIZE,

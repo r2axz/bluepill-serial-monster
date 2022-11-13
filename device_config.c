@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -8,6 +8,7 @@
 #include <stm32f1xx.h>
 #include <limits.h>
 #include "device_config.h"
+#include "default_config.h"
 
 #define DEVICE_CONFIG_FLASH_SIZE    0x10000UL
 #define DEVICE_CONFIG_NUM_PAGES     2
@@ -15,60 +16,6 @@
 #define DEVICE_CONFIG_FLASH_END     (FLASH_BASE + DEVICE_CONFIG_FLASH_SIZE)
 #define DEVICE_CONFIG_BASE_ADDR     ((void*)(DEVICE_CONFIG_FLASH_END - DEVICE_CONFIG_NUM_PAGES * DEVICE_CONFIG_PAGE_SIZE))
 #define DEVICE_CONFIG_MAGIC         0xDECFDECFUL
-
-static const device_config_t default_device_config = {
-    .status_led_pin = { .port = GPIOC, .pin = 13, .dir = gpio_dir_output, .speed = gpio_speed_low, .func = gpio_func_general, .output = gpio_output_od, .polarity = gpio_polarity_low },
-    .config_pin = { .port = GPIOB, .pin = 5, .dir = gpio_dir_input, .pull = gpio_pull_up, .polarity = gpio_polarity_low },
-    .cdc_config = {
-        .port_config = {
-            /*  Port 0 */
-            {
-                .pins = 
-                {
-                    /*  rx */ { .port = GPIOA, .pin = 10, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_high },
-                    /*  tx */ { .port = GPIOA, .pin =  9, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_alternate, .output = gpio_output_pp, .polarity = gpio_polarity_high },
-                    /* rts */ { .port = GPIOA, .pin =  15, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_low},
-                    /* cts */ { .port = 0 }, /* CTS pin is occupied by USB      */
-                    /* dsr */ { .port = GPIOB, .pin =  7, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
-                    /* dtr */ { .port = GPIOA, .pin =  4, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_low  },
-                    /* dcd */ { .port = GPIOB, .pin = 15, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
-                    /*  ri */ { .port = GPIOB, .pin =  3, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
-                    /* txa */ { .port = GPIOB, .pin =  0, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_high  },
-                }
-            },
-            /*  Port 1 */
-            {
-                .pins = 
-                {
-                    /*  rx */ { .port = GPIOA, .pin =  3, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_high },
-                    /*  tx */ { .port = GPIOA, .pin =  2, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_alternate, .output = gpio_output_pp, .polarity = gpio_polarity_high },
-                    /* rts */ { .port = GPIOA, .pin =  1, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_low},
-                    /* cts */ { .port = GPIOA, .pin =  0, .dir = gpio_dir_input,  .pull = gpio_pull_down, .polarity = gpio_polarity_low },
-                    /* dsr */ { .port = GPIOB, .pin =  4, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
-                    /* dtr */ { .port = GPIOA, .pin =  5, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_low },
-                    /* dcd */ { .port = GPIOB, .pin =  8, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
-                    /*  ri */ { .port = GPIOB, .pin = 12, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
-                    /* txa */ { .port = GPIOB, .pin =  1, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_high  },
-                }
-            },
-            /*  Port 2 */
-            {
-                .pins = 
-                {
-                    /*  rx */ { .port = GPIOB, .pin = 11, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_high },
-                    /*  tx */ { .port = GPIOB, .pin = 10, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_alternate, .output = gpio_output_pp, .polarity = gpio_polarity_high  },
-                    /* rts */ { .port = GPIOB, .pin = 14, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_low },
-                    /* cts */ { .port = GPIOB, .pin = 13, .dir = gpio_dir_input,  .pull = gpio_pull_down, .polarity = gpio_polarity_low },
-                    /* dsr */ { .port = GPIOB, .pin =  6, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
-                    /* dtr */ { .port = GPIOA, .pin =  6, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_low  },
-                    /* dcd */ { .port = GPIOB, .pin =  9, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
-                    /*  ri */ { .port = GPIOA, .pin =  8, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
-                    /* txa */ { .port = GPIOA, .pin =  7, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_high  },
-                }
-            },
-        }
-    }
-};
 
 static device_config_t current_device_config;
 
@@ -111,10 +58,12 @@ void device_config_init() {
     RCC->AHBENR |= RCC_AHBENR_CRCEN;
     const device_config_t *stored_config = device_config_get_stored();
     if (stored_config == 0) {
-        stored_config = &default_device_config;
+        default_config_load(&current_device_config);
+    } else {
+        memcpy(&current_device_config, stored_config, sizeof(*stored_config));
     }
-    memcpy(&current_device_config, stored_config, sizeof(*stored_config));
 }
+
 device_config_t *device_config_get() {
     return &current_device_config;
 }
@@ -174,6 +123,75 @@ void device_config_save() {
 }
 
 void device_config_reset() {
-    memcpy(&current_device_config, &default_device_config, sizeof(default_device_config));
+    default_config_load(&current_device_config);
     device_config_save();
+}
+
+static int cdc_port_set_enable_confugred(int port, int enabled);
+static void gpio_pin_alternative_update(int port, gpio_status_t new_status)
+{
+    device_config_t *device_config = device_config_get();
+    cdc_port_t *port_config = &device_config->cdc_config.port_config[port];
+    gpio_pin_t *rx = gpion_to_gpio(port_config->pins[cdc_pin_rx]);
+    gpio_pin_t *tx = gpion_to_gpio(port_config->pins[cdc_pin_tx]);
+
+    if (rx->status == gpio_status_occupied && tx->status == gpio_status_occupied) {
+        cdc_port_set_enable_confugred(port, 1);
+    } else if (rx->status != tx->status && new_status == gpio_status_free) {
+        cdc_port_set_enable_confugred(port, 0);
+    }
+}
+
+int gpio_pin_set_status(gpion_pin_t pinn, gpio_status_t new_status)
+{
+    gpio_pin_t *pin = gpion_to_gpio(pinn);
+    device_config_t *device_config = device_config_get();
+    if (!pin) return -1;
+    if (pin->status == new_status || pin->status == gpio_status_blocked ||
+        (new_status != gpio_status_free && new_status != gpio_status_occupied)) {
+        return 0;
+    }
+    cdc_pin_ref_t cdc_pin = gpion_to_cdc(pinn);
+
+    pin->status = new_status;
+    if (cdc_pin.port >= 0 && cdc_pin.port < USB_CDC_NUM_PORTS) {
+        if (new_status == gpio_status_occupied) {
+            default_config_load_pin(device_config, pinn);
+            usb_cdc_reconfigure_port_pin(cdc_pin.port, cdc_pin.pin);
+        }
+        if (cdc_pin.pin == cdc_pin_rx || cdc_pin.pin == cdc_pin_tx) {
+            gpio_pin_alternative_update(cdc_pin.port, new_status);
+        }
+    }
+    return 0;
+}
+
+int cdc_port_set_enable(int port, int enabled)
+{
+    device_config_t *device_config = device_config_get();
+    cdc_port_t *port_config = &device_config->cdc_config.port_config[port];
+    if (enabled) {
+        gpio_pin_set_status(port_config->pins[cdc_pin_rx], gpio_status_occupied);
+        gpio_pin_set_status(port_config->pins[cdc_pin_tx], gpio_status_occupied);
+    } else {
+        gpio_pin_set_status(port_config->pins[cdc_pin_rx], gpio_status_free);
+        gpio_pin_set_status(port_config->pins[cdc_pin_tx], gpio_status_free);
+    }
+    return 0;
+}
+
+static int cdc_port_set_enable_confugred(int port, int enabled)
+{
+    device_config_t *device_config = device_config_get();
+    cdc_port_t *port_config = &device_config->cdc_config.port_config[port];
+    if (enabled) {
+        usb_cdc_reconfigure_port(port);
+        usb_cdc_enable_port(port);
+    } else {
+        usb_cdc_suspend_port(port);
+        for (int pin = 0; pin < cdc_pin_last; ++pin) {
+            gpio_pin_set_status(port_config->pins[pin], gpio_status_free);
+        }
+    }
+    return 0;
 }

@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -17,6 +17,7 @@ int main() {
     device_config_init();
     status_led_init();
     usb_init();
+
     while (1) {
         usb_poll();
     }
