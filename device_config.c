@@ -34,7 +34,8 @@ static const device_config_t default_device_config = {
                     /* dcd */ { .port = GPIOB, .pin = 15, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
                     /*  ri */ { .port = GPIOB, .pin =  3, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
                     /* txa */ { .port = GPIOB, .pin =  0, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_high  },
-                }
+                },
+                .useIrDA = 0,
             },
             /*  Port 1 */
             {
@@ -49,7 +50,8 @@ static const device_config_t default_device_config = {
                     /* dcd */ { .port = GPIOB, .pin =  8, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
                     /*  ri */ { .port = GPIOB, .pin = 12, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
                     /* txa */ { .port = GPIOB, .pin =  1, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_high  },
-                }
+                },
+                .useIrDA = 0,
             },
             /*  Port 2 */
             {
@@ -64,7 +66,8 @@ static const device_config_t default_device_config = {
                     /* dcd */ { .port = GPIOB, .pin =  9, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
                     /*  ri */ { .port = GPIOA, .pin =  8, .dir = gpio_dir_input,  .pull = gpio_pull_up, .polarity = gpio_polarity_low },
                     /* txa */ { .port = GPIOA, .pin =  7, .dir = gpio_dir_output, .speed = gpio_speed_medium, .func = gpio_func_general, .output = gpio_output_pp, .polarity = gpio_polarity_high  },
-                }
+                },
+                .useIrDA = 0,
             },
         }
     }
@@ -76,7 +79,7 @@ static uint32_t device_config_calc_crc(const device_config_t *device_config) {
     uint32_t *word_p = (uint32_t*)device_config;
     size_t bytes_left = offsetof(device_config_t, crc);
     CRC->CR |= CRC_CR_RESET;
-    while (bytes_left > sizeof(*word_p)) {
+    while (bytes_left >= sizeof(*word_p)) {
         CRC->DR = *word_p++;
         bytes_left -= sizeof(*word_p);
     }
@@ -104,15 +107,12 @@ const static device_config_t* device_config_get_stored() {
         }
         config_page += DEVICE_CONFIG_PAGE_SIZE;
     }
-    return 0;
+    return &default_device_config;
 }
 
 void device_config_init() {
     RCC->AHBENR |= RCC_AHBENR_CRCEN;
     const device_config_t *stored_config = device_config_get_stored();
-    if (stored_config == 0) {
-        stored_config = &default_device_config;
-    }
     memcpy(&current_device_config, stored_config, sizeof(*stored_config));
 }
 device_config_t *device_config_get() {

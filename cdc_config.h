@@ -12,6 +12,7 @@
 
 typedef struct {
     gpio_pin_t pins[cdc_pin_last];
+    char useIrDA;
 } __attribute__ ((packed)) cdc_port_t;
 
 typedef struct {
