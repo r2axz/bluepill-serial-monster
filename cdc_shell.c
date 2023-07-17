@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -60,6 +60,7 @@ static int cdc_shell_invoke_command(int argc, char *argv[], const cdc_shell_cmd_
 static const char cdc_shell_err_uart_missing_arguments[]            = "Error, no arguments, use \"help uart\" for the list of arguments.\r\n";
 static const char cdc_shell_err_uart_invalid_uart[]                 = "Error, invalid UART number.\r\n";
 static const char cdc_shell_err_uart_unknown_signal[]               = "Error, unknown signal name.\r\n";
+static const char cdc_shell_err_uart_unknown_irda[]                 = "Error, unknown IrDA state (yes|no required).\r\n";
 static const char cdc_shell_err_uart_missing_signame[]              = "Error, expected \"show\" or a signal name, got nothing.\r\n";
 static const char cdc_shell_err_uart_missing_params[]               = "Error, missing signal parameters.\r\n";
 static const char cdc_shell_err_uart_missing_output_type[]          = "Error, missing output type.\r\n";
@@ -71,7 +72,8 @@ static const char cdc_shell_err_uart_invalid_pull_type[]            = "Error, in
 static const char cdc_shell_err_cannot_set_output_type_for_input[]  = "Error, cannot set output type for input pin.\r\n";
 static const char cdc_shell_err_cannot_change_polarity[]            = "Error, cannot change polarity of alternate function pins.\r\n";
 static const char cdc_shell_err_cannot_set_pull_for_output[]        = "Error, cannot pull type for output pin.\r\n";
-
+static const char yes_str[]                                         = "yes";
+static const char no_str[]                                          = "no";
 
 static const char *_cdc_uart_signal_names[cdc_pin_last] = {
     "rx", "tx", "rts", "cts", "dsr", "dtr", "dcd", "ri", "txa",
@@ -135,6 +137,7 @@ static void cdc_shell_cmd_uart_show(int port) {
     const char *output_str = "output ";
     const char *comma_str = ", ";
     const char *colon_str = ":";
+    const char *irda_str = "IrDA";
     char port_index_str[32];
     for (int port_index = ((port == -1) ? 0 : port);
              port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
@@ -174,6 +177,11 @@ static void cdc_shell_cmd_uart_show(int port) {
             }
             cdc_shell_write_string(cdc_shell_new_line);
         }
+        // describe IrDA status
+        cdc_shell_write_string(irda_str);
+        cdc_shell_write_string(cdc_shell_delim);
+        cdc_shell_write_string(cdc_port->useIrDA ? yes_str : no_str);
+        cdc_shell_write_string(cdc_shell_new_line);
     }
 }
 
@@ -225,6 +233,22 @@ static int cdc_shell_cmd_uart_set_pull_type(int port, cdc_pin_t uart_pin, gpio_p
     return 0;
 }
 
+static int cdc_shell_cmd_uart_set_irda(int port, const char *use){
+    for (int port_index = ((port == -1) ? 0 : port);
+             port_index < ((port == -1) ? USB_CDC_NUM_PORTS : port + 1);
+             port_index++) {
+        if(strcmp(use, yes_str) == 0) {
+            device_config_get()->cdc_config.port_config[port_index].useIrDA = 1;
+        } else if(strcmp(use, no_str) == 0){
+            device_config_get()->cdc_config.port_config[port_index].useIrDA = 0;
+        } else {
+            cdc_shell_write_string(cdc_shell_err_uart_unknown_irda);
+            return -1;
+        }
+    }
+    return 0;
+}
+
 static void cdc_shell_cmd_uart(int argc, char *argv[]) {
     if (argc--) {
         int port;
@@ -241,6 +265,14 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
         if (argc) {
             if (strcmp(*argv, "show") == 0) {
                 cdc_shell_cmd_uart_show(port);
+            } else if(strcmp(*argv, "irda") == 0){
+                if(argc > 0){
+                    ++argv;
+                    --argc;
+                    cdc_shell_cmd_uart_set_irda(port, *argv);
+                } else {
+                    cdc_shell_write_string(cdc_shell_err_uart_unknown_irda);
+                }
             } else {
                 while(argc) {
                     argc--;
@@ -323,7 +355,7 @@ static void cdc_shell_cmd_uart(int argc, char *argv[]) {
         }
     } else {
         cdc_shell_write_string(cdc_shell_err_uart_missing_arguments);
-    } 
+    }
 }
 
 
@@ -360,7 +392,7 @@ static void cdc_shell_cmd_version(int argc, char *argv[]) {
 static void cdc_shell_cmd_help(int argc, char *argv[]);
 
 static const cdc_shell_cmd_t cdc_shell_commands[] = {
-    { 
+    {
         .cmd            = "help",
         .handler        = cdc_shell_cmd_help,
         .description    = "shows this help message, use \"help command-name\" to get command-specific help",
@@ -374,11 +406,11 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
                           "Use: \"config save\" to permanently save device configuration.\r\n"
                           "Use: \"config reset\" to reset device configuration to default.",
     },
-    { 
+    {
         .cmd            = "uart",
         .handler        = cdc_shell_cmd_uart,
         .description    = "set and view UART parameters",
-        .usage          = "Usage: uart port-number|all show|signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\r\n"
+        .usage          = "Usage: uart port-number|all show|signal-name-1|irda param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\r\n"
                           "Use \"uart port-number|all show\" to view current UART configuration.\r\n"
                           "Use \"uart port-number|all signal-name-1 param-1 value-1 ... [param-n value-n] [signal-name-2 ...]\"\r\n"
                           "to set UART parameters, where signal names are rx, tx, rts, cts, dsr, dtr, dcd, ri, txa,\r\n"
@@ -386,6 +418,7 @@ static const cdc_shell_cmd_t cdc_shell_commands[] = {
                           "  output\t[pp|od]\r\n"
                           "  active\t[low|high]\r\n"
                           "  pull\t\t[floating|up|down]\r\n"
+                          "Use \"uart port-number|all irda yes|no to set IrDA mode on or off\r\n"
                           "Example: \"uart 1 tx output od\" sets UART1 TX output type to open-drain\r\n"
                           "Example: \"uart 3 rts active high dcd active high pull down\" allows to set multiple parameters at once.",
     },

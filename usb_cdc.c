@@ -1,6 +1,6 @@
 /*
- * MIT License 
- * 
+ * MIT License
+ *
  * Copyright (c) 2020 Kirill Kotyagin
  */
 
@@ -26,9 +26,9 @@ static uint8_t usb_cdc_config_mode = 0;
 
 static const usb_cdc_line_coding_t usb_cdc_default_line_coding = {
     .dwDTERate      = 9600,
-    .bCharFormat    = usb_cdc_char_format_1_stop_bit, 
+    .bCharFormat    = usb_cdc_char_format_1_stop_bit,
     .bParityType    = usb_cdc_parity_type_none,
-    .bDataBits      = 8,
+    .bDataBits      = usb_cdc_data_bits_8,
 };
 
 typedef struct {
@@ -77,11 +77,11 @@ static DMA_Channel_TypeDef* usb_cdc_get_port_dma_channel(int port, usb_cdc_port_
         { DMA1_Channel6,  DMA1_Channel7 },
         { DMA1_Channel3,  DMA1_Channel2 },
     };
-    if (port < (sizeof(port_dma_channels) / sizeof(*port_dma_channels)) && 
+    if (port < (sizeof(port_dma_channels) / sizeof(*port_dma_channels)) &&
         port_dir < usb_cdc_port_direction_last) {
         return port_dma_channels[port][port_dir];
     }
-    return (DMA_Channel_TypeDef*)0; 
+    return (DMA_Channel_TypeDef*)0;
 }
 
 static uint8_t const usb_cdc_port_data_endpoints[] = {
@@ -90,7 +90,7 @@ static uint8_t const usb_cdc_port_data_endpoints[] = {
     usb_endpoint_address_cdc_2_data,
 };
 
-static uint8_t usb_cdc_get_port_data_ep(int port) {
+static int usb_cdc_get_port_data_ep(int port) {
     if (port < (sizeof(usb_cdc_port_data_endpoints) / sizeof(*usb_cdc_port_data_endpoints))) {
         return usb_cdc_port_data_endpoints[port];
     }
@@ -106,13 +106,12 @@ static int usb_cdc_data_endpoint_port(uint8_t ep_num) {
     return -1;
 }
 
-static uint8_t const usb_cdc_port_interrupt_endpoints[] = {
-    usb_endpoint_address_cdc_0_interrupt,
-    usb_endpoint_address_cdc_1_interrupt,
-    usb_endpoint_address_cdc_2_interrupt,
-};
-
-static uint8_t usb_cdc_get_port_notification_ep(int port) {
+static int usb_cdc_get_port_notification_ep(int port) {
+    static uint8_t const usb_cdc_port_interrupt_endpoints[] = {
+        usb_endpoint_address_cdc_0_interrupt,
+        usb_endpoint_address_cdc_1_interrupt,
+        usb_endpoint_address_cdc_2_interrupt,
+    };
     if (port < (sizeof(usb_cdc_port_interrupt_endpoints) / sizeof(*usb_cdc_port_interrupt_endpoints))) {
         return usb_cdc_port_interrupt_endpoints[port];
     }
@@ -149,7 +148,10 @@ static uint32_t usb_cdc_get_port_fck(int port) {
 /* USB CDC Notifications */
 
 static int usb_cdc_send_port_state(int port, usb_cdc_serial_state_t state) {
-    uint8_t ep_num = usb_cdc_get_port_notification_ep(port);
+    int ep_num = usb_cdc_get_port_notification_ep(port);
+    if(ep_num < 0){
+        return -1;
+    }
     uint8_t buf[sizeof(usb_cdc_notification_t) + sizeof(state)];
     usb_cdc_notification_t *notification = (usb_cdc_notification_t*)buf;
     uint8_t *state_p = buf + sizeof(usb_cdc_notification_t);
@@ -312,6 +314,14 @@ static usb_status_t usb_cdc_set_line_coding(int port, const usb_cdc_line_coding_
     if (!dry_run) {
         /* force sending port state, this helps some apps */
         usb_cdc_states[port].serial_state_prev = ~(usb_cdc_states[port].serial_state_prev & 0);
+        // this place was selected to reflect changes in IrDA configuration take action after serial port reopened
+        if(device_config_get()->cdc_config.port_config[port].useIrDA){
+            usart->CR3 |= USART_CR3_IREN;
+            usart->GTPR = 1;
+        } else {
+            usart->CR3 &= ~USART_CR3_IREN;
+            usart->GTPR = 0;
+        }
     }
     return usb_status_ack;
 }
@@ -321,7 +331,10 @@ static usb_status_t usb_cdc_set_line_coding(int port, const usb_cdc_line_coding_
 static void usb_cdc_port_send_rx_usb(int port) {
     usb_cdc_state_t *cdc_state = &usb_cdc_states[port];
     circ_buf_t *rx_buf = &cdc_state->rx_buf;
-    uint8_t rx_ep = usb_cdc_get_port_data_ep(port);
+    int rx_ep = usb_cdc_get_port_data_ep(port);
+    if(rx_ep < 0){
+        return;
+    }
     size_t rx_bytes_available = circ_buf_count(rx_buf->head, rx_buf->tail, USB_CDC_BUF_SIZE);
     size_t ep_space_available = usb_space_available(rx_ep);
     if (ep_space_available) {
@@ -400,7 +413,10 @@ void usb_cdc_config_mode_leave() {
  */
 
 void usb_cdc_config_mode_process_tx() {
-    uint8_t ep_num = usb_cdc_get_port_data_ep(USB_CDC_CONFIG_PORT);
+    int ep_num = usb_cdc_get_port_data_ep(USB_CDC_CONFIG_PORT);
+    if(ep_num < 0){
+        return;
+    }
     usb_cdc_state_t *cdc_state = &usb_cdc_states[USB_CDC_CONFIG_PORT];
     circ_buf_t *tx_buf = &cdc_state->tx_buf;
     size_t count;
@@ -579,7 +595,7 @@ void usb_cdc_reset() {
     NVIC_EnableIRQ(DMA1_Channel4_IRQn);
     NVIC_SetPriority(DMA1_Channel7_IRQn, SYSTEM_INTERRUTPS_PRIORITY_HIGH);
     NVIC_EnableIRQ(DMA1_Channel7_IRQn);
-    /* 
+    /*
      * Disable JTAG interface (SWD is still enabled),
      * this frees PA15, PB3, PB4 (needed for DSR/RI inputs).
      */
@@ -720,7 +736,7 @@ usb_status_t usb_cdc_ctrl_process_request(usb_setup_t *setup, void **payload,
                 if (setup->wLength == sizeof(usb_cdc_line_coding_t)) {
                     int dry_run = 0;
                     circ_buf_t *tx_buf = &usb_cdc_states[port].tx_buf;
-                    /* 
+                    /*
                      * If the TX buffer is not empty, defer setting
                      * line coding until all data are sent over the serial port.
                      */
